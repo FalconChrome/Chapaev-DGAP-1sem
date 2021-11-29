@@ -15,8 +15,11 @@ class Draw():
                 color = RED if (i+j) % 2 == 0 else GREEN
                 pygame.draw.rect(self.sc, color, cur_pos, 0)
 
-    def chess(self):
-        pass
+    def chess(self, chess):
+        for ch in chess:
+            pos = None #FIXIT
+            color = None #FIXIT
+            pygame.draw.circle(self.sc, color, pos, RADIUS)
 
 if __name__ == "__main__":
     print('THIS MODULE NOT FOR DIRECT CALL')

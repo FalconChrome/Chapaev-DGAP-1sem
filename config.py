@@ -16,3 +16,4 @@ FPS = 30
 # Game settings
 
 TILE = 30 #Length of one tile in chessboard
+RADIUS = 5 #Radius of the "шашка"
