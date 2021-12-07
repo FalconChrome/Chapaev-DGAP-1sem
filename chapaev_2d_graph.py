@@ -15,7 +15,7 @@ class Draw():
                 color = RED if (i+j) % 2 == 0 else GREEN
                 pygame.draw.rect(self.sc, color, cur_pos, 0)
 
-    def chess(self, chess):
+    def chess(self, chees):
         for ch in chess:
             pos = None #FIXIT
             color = None #FIXIT
