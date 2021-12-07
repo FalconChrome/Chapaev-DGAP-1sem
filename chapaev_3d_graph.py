@@ -1,4 +1,6 @@
 # Graphics for Chapaev 3D with poligons
+''' Camera control: wasd, to change angle use LEFT,RIGHT.
+    UP and DOWN didn't work well                         '''
 import pygame as pg
 import numpy as np
 from config import *
