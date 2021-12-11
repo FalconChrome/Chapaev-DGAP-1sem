@@ -189,6 +189,18 @@ def scale(a):
         [0, 0, 0, 1]])
 
 class Render():
+    ''' The big main class, that draw everything
+        __init__ - take screen - pygame screen
+        methods:
+        1) create_object(self, poitns, faces, color)
+           creates object with position, that depends on the object definition
+           easily can be changed to any coords, by using Object_3D method set_coords
+        2) draw_objects_3D - drawing obgects in 3D
+        3) draw_menu - drawing main screen
+    '''
+
+
+    
     def __init__(self, screen):
         self.objects = []  # First will be board, then cheese
         self.screen = screen
@@ -197,14 +209,23 @@ class Render():
         self.camera = Camera(self, [0.5*TILE, TILE,-4*TILE])
         self.projection = Projection(self)
         
-    def create_object(self, points, faces, color, ):
+    def create_object(self, points, faces, color):
+        ''' Создание объекта для отрисовки'''
         object1 = Object_3D(self, points, faces, color)
         self.objects.append(object1)
         
-    def draw(self):
+    def draw_objects_3D(self):
+        ''' Метод для отрисовки объектов (пока на чёрном фоне)
+            В будущем, если не нужно будет отображать некоторые объекты,
+            добавится интерфейс по типу характеристической функции
+        '''
         self.screen.fill(BLACK)
         for object1 in self.objects:
             object1.draw()
+    def draw_menu(self):
+        ''' The first screen, greeting, settings, game mode'''
+        pass
+        
         
 def rescale():
     '''This function will scale coords, if we need'''
@@ -213,7 +234,7 @@ def rescale():
 '''if __name__ == "__main__":
     print('THIS MODULE NOT FOR DIRECT CALL') '''
 
-if __name__ == "__main__": # This module will be not callable, just while testing
+if __name__ == "__main__": # This module will be not callable, this is temporary, just while testing
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
@@ -241,7 +262,7 @@ if __name__ == "__main__": # This module will be not callable, just while testin
             draw1.objects[-1].set_coords((i*7*TILE + TILE // 2 - RADIUS // 2, 0, j*TILE + TILE // 2 - RADIUS // 2))
     finished = False
     while not finished:
-        draw1.draw()
+        draw1.draw_objects_3D()
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 finished = True
