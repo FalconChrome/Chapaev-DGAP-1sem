@@ -224,7 +224,9 @@ class Render():
             object1.draw()
     def draw_menu(self):
         ''' The first screen, greeting, settings, game mode'''
-        pass
+        self.screen.fill(BLACK)
+        pg.draw.rect(self.screen, BUT_1.color, (BUT_1.pos, (BUT_1.width, BUT_1.height)))#FIXIT нужен текст, + ещё кнопки
+        
         
         
 def rescale():
@@ -261,14 +263,31 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
                                     RED) #куб (пока что)
             draw1.objects[-1].set_coords((i*7*TILE + TILE // 2 - RADIUS // 2, 0, j*TILE + TILE // 2 - RADIUS // 2))
     finished = False
-    while not finished:
-        draw1.draw_objects_3D()
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                finished = True
-            draw1.camera.control(event)
-        pg.display.set_caption(str(clock.get_fps()))
-        pg.display.update()
-        clock.tick(FPS)
-
+    great_finish = False
+    while not great_finish:
+        
+        while not finished and not great_finish:
+            draw1.draw_menu()
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    great_finish = True
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_1:
+                        finished = True
+            pg.display.set_caption(str(clock.get_fps()))
+            pg.display.update()
+            clock.tick(FPS)
+        
+        finished = False
+        while not finished and not great_finish :
+            draw1.draw_objects_3D()
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    finished = True
+                draw1.camera.control(event)
+            pg.display.set_caption(str(clock.get_fps()))
+            pg.display.update()
+            clock.tick(FPS)
+        finished = False
+        
     pg.quit()

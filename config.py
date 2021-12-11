@@ -22,3 +22,18 @@ HALF_HEIGHT = HEIGHT // 2
 
 TILE = 20 #Length of one tile in chessboard
 RADIUS = 5 #Radius of the "шашка"
+
+# BUTTONs
+
+class Button():
+    ''' button with color (tuple 3 int), text (str), pos (tuple 2 int),
+        width (int) and height (int)'''
+    def __init__(self, color, text, pos, width, height):
+        self.color = color
+        self.pos = pos
+        self.width = width
+        self.height = height
+        self.text = text
+
+BUT_1 = Button(RED, 'START', (HALF_WIDTH - 50, HALF_HEIGHT - 25), 100, 50)
+        
