@@ -1,4 +1,4 @@
 # Chapaev-DGAP-1sem
-First term project of the python programming course of MIPT PSFAP(DGAP)
+First term project on the MIPT PSFAP(DGAP) python programming course
 
-Проект первого семестра по курсу программирования на питоне ЛФИ МФТИ
+Проект первого семестра по курсу программирования на питоне, ЛФИ МФТИ
