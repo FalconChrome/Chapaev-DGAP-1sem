@@ -1,61 +1,69 @@
 import pygame
+from pygame import mouse
 import chapaev_3d_graph as graph
 import enum
 
 
-Stage = enum.Enum("Stage", "move, fly")
+class HitController:
+    HitStage = enum.Enum("HitStage", "none, touched")
 
-model = None
+    def __init__(self):
+        self.state = self.HitStage.none
 
-
-def init(option):
-    # model init
-    print(option)
-
-
-def click(event):
-    print(event.pos)
+    def mouse_handler(self):
+        if mouse.get_pressed()[0]:
+            if self.state == self.HitStage.none:
+                self.state = self.HitStage.touched
 
 
-def process_event(event):
-    if event.type == pygame.MOUSEBUTTONUP:
-        click(event)
+class MainController:
+    GameStage = enum.Enum("GameStage", "move, fly")
 
+    def __init__(self):
+        self.size = 1600, 960
+        self.screen = pygame.display.set_mode(self.size)
+        self.state = self.GameStage.move
+        self.hit_control = HitController()
 
-def mouse_hit(mouse):
-    pass
+    def mainloop(self):
+        restart_option = 1
+        while restart_option != 0:
+            self.init(restart_option)
+            restart_option = self.gameloop()
 
+    def init(self, restart_option):
+        # model init
+        print(restart_option)
 
-def gameloop():
-    FPS = 24
-    clock = pygame.time.Clock()
-    state = Stage.move
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            else:
-                process_event(event)
+    def gameloop(self):
+        FPS = 24
+        clock = pygame.time.Clock()
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                else:
+                    self.process_event(event)
 
-        if state == Stage.move:
-            mouse_hit(pygame.mouse)
-        # update(FPS)
-        # render()
-        clock.tick(FPS)
-    return False
+            if self.state == self.GameStage.move:
+                if self.hit_control.mouse_handler():
+                    self.state = self.GameStage.fly
+                    # model start motion
+            # update(FPS)
+            # render()
+            clock.tick(FPS)
+        return 0
 
+    def click(self, event):
+        print(event.pos)
 
-def play(restart):
-    init(restart)
-    return gameloop()
+    def process_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.click(event)
 
 
 if __name__ == "__main__":
     pygame.init()
-    size = 1600, 960
-    screen = pygame.display.set_mode(size)
-    restart = 1
-    while restart != 0:
-        restart = play(restart)
+    MainController().mainloop()
     pygame.quit()
