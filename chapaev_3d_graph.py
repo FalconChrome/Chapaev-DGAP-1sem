@@ -103,14 +103,24 @@ class Camera:
         
 
 class Object_3D:
-    def __init__(self, render, points, faces, color):
+    ''' render - Render obgect
+        points - numpy array of points
+        faces - numpy array of numbers of points, that together make faces
+        color - tuple of 3 integer (0 - 255)
+        visibility - if True, then visibу, else - invisible
+        pos = tuple 3 int
+    '''
+    def __init__(self, render, points, faces, color, pos):
         self.render = render
         self.points = points
         self.color = color
         self.faces = faces
+        self.visibility = True
+        self.pos = pos
 
     def draw(self):
-        self.screen_projection()
+        if self.visibility:
+            self.screen_projection()
     
     def screen_projection(self):
         points = self.points @ self.render.camera.camera_matrix()
@@ -126,14 +136,14 @@ class Object_3D:
                 pg.draw.polygon(self.render.screen, self.color, polygon, 3)
                     
                 
-    def set_coords(self, pos):
-        self.points = self.points @ translate(pos)
+    def set_coords(self, pos):                          
+        self.points = self.points @ translate(pos)        # Вращение и перемещение в глобальной системе координат
     
     def translate(self, pos):
         self.points = self.points @ translate(pos)
 
     def scale(self, sc):
-        self.points = self.points @ scale(pos)
+        self.points = self.points @ scale(sc)
         
     def rotate_x(self, angle):
         self.points = self.points @ rotate_x(angle)
@@ -143,15 +153,15 @@ class Object_3D:
 
     def rotate_z(self, angle):
         self.points = self.points @ rotate_z(angle)
-
-def set_coord(pos):
-    ''' pos - tuple of 3 float'''
-    tx, ty, tz = pos
-    return np.array([
-        [tx, 0, 0, 0],
-        [0, ty, 0, 0],
-        [0, 0, tz, 0],
-        [0, 0, 0, 1]])
+    
+    def rotate_local_y(self, angle):
+        t1, t2, t3 = self.pos
+        anti_pos = -t1, -t2, -t3
+        self.set_coords(anti_pos)
+        self.rotate_y(angle)
+        self.set_coords(self.pos)
+        
+        
     
 def translate(pos):
     ''' pos - tuple of 3 float'''
@@ -209,9 +219,9 @@ class Render():
         self.camera = Camera(self, [0.5*TILE, TILE,-4*TILE])
         self.projection = Projection(self)
         
-    def create_object(self, points, faces, color):
+    def create_object(self, points, faces, color, pos):
         ''' Создание объекта для отрисовки'''
-        object1 = Object_3D(self, points, faces, color)
+        object1 = Object_3D(self, points, faces, color, pos)
         self.objects.append(object1)
         
     def draw_objects_3D(self):
@@ -249,19 +259,27 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
     for i in range(8):
         for j in range(8):
             B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
-    draw1.create_object(A, B, WHITE)
+    draw1.create_object(A, B, WHITE, (0, 0, 0))
     
     for i in range(2):
         for j in range(8):
             if i % 2 == 0:
-                draw1.create_object(np.array([(0, 0, 0, 1), (0, RADIUS, 0, 1), (RADIUS, RADIUS, 0, 1), (RADIUS, 0, 0, 1),(0, 0, RADIUS, 1), (0, RADIUS, RADIUS, 1), (RADIUS, RADIUS, RADIUS, 1), (RADIUS, 0, RADIUS, 1)]),
+                draw1.create_object(np.array([(-RADIUS//2, 0, -RADIUS//2, 1),
+                                              (-RADIUS//2, RADIUS, -RADIUS//2, 1),
+                                              (RADIUS//2, RADIUS, -RADIUS//2, 1),
+                                              (RADIUS//2, 0, -RADIUS//2, 1), (-RADIUS//2, 0, RADIUS//2, 1),
+                                              (-RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, RADIUS, RADIUS//2, 1),
+                                            (RADIUS//2, 0, RADIUS//2, 1)]),
                                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]),
-                                    GREEN) #куб (пока что)
+                                    GREEN, (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)) #куб (пока что)
             else:
-                draw1.create_object(TILE*np.array([(0, 0, 0, 1), (0, RADIUS, 0, 1), (RADIUS, RADIUS, 0, 1), (RADIUS, 0, 0, 1),(0, 0, RADIUS, 1), (0, RADIUS, RADIUS, 1), (RADIUS, RADIUS, RADIUS, 1), (RADIUS, 0, RADIUS, 1)]),
+                draw1.create_object(np.array([(-RADIUS//2, 0, -RADIUS//2, 1), (-RADIUS//2, RADIUS, -RADIUS//2, 1),
+                                              (RADIUS//2, RADIUS, -RADIUS//2, 1), (RADIUS//2, 0, -RADIUS//2, 1),
+                                              (-RADIUS//2, 0, RADIUS//2, 1), (-RADIUS//2, RADIUS, RADIUS//2, 1),
+                                              (RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, 0, RADIUS//2, 1)]),
                                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]),
-                                    RED) #куб (пока что)
-            draw1.objects[-1].set_coords((i*7*TILE + TILE // 2 - RADIUS // 2, 0, j*TILE + TILE // 2 - RADIUS // 2))
+                                    RED, (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)) #куб (пока что)
+            draw1.objects[-1].set_coords((i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2))
     finished = False
     great_finish = False
     while not great_finish:
@@ -279,8 +297,9 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
             clock.tick(FPS)
         
         finished = False
-        while not finished and not great_finish :
-            draw1.draw_objects_3D()
+        while not finished and not great_finish:
+            draw1.objects[1].rotate_local_y(0.2) #поворот объекта 1 на 0.2 радиана каждый кадр
+            draw1.draw_objects_3D()              #отрисовка объектов
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     finished = True

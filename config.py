@@ -21,7 +21,7 @@ HALF_HEIGHT = HEIGHT // 2
 # Game settings
 
 TILE = 20 #Length of one tile in chessboard
-RADIUS = 5 #Radius of the "шашка"
+RADIUS = 10 #Radius of the "шашка"
 
 # BUTTONs
 
