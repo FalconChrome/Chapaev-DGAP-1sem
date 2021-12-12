@@ -122,6 +122,14 @@ class Object_3D:
         if self.visibility:
             self.screen_projection()
     
+    def draw_2D(self):
+        if self.visibility:
+            points_screen = self.points[:, ::2]
+            for face in self.faces:
+                polygon = points_screen[face]
+                pg.draw.polygon(self.render.screen, self.color, polygon, 3)
+            
+    
     def screen_projection(self):
         points = self.points @ self.render.camera.camera_matrix()
         points = points @ self.render.projection.projection_matrix
@@ -132,7 +140,7 @@ class Object_3D:
         
         for face in self.faces:
             polygon = points_screen[face]
-            if not np.any((polygon == self.render.H_WIDTH)|(polygon == self.render.H_HEIGHT)):
+            if not np.any((polygon == self.render.H_WIDTH)|(polygon == self.render.H_HEIGHT)):  #check out of drawing range
                 pg.draw.polygon(self.render.screen, self.color, polygon, 3)
                     
                 
@@ -225,18 +233,20 @@ class Render():
         self.objects.append(object1)
         
     def draw_objects_3D(self):
-        ''' Метод для отрисовки объектов (пока на чёрном фоне)
-            В будущем, если не нужно будет отображать некоторые объекты,
-            добавится интерфейс по типу характеристической функции
+        ''' Метод для отрисовки объектов в 3D (пока на чёрном фоне)
+            отрисовка зависит от положения объектов и от положения камеры
         '''
         self.screen.fill(BLACK)
         for object1 in self.objects:
             object1.draw()
-    def draw_menu(self):
+    def draw_menu(self):  #FIXIT
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
         pg.draw.rect(self.screen, BUT_1.color, (BUT_1.pos, (BUT_1.width, BUT_1.height)))#FIXIT нужен текст, + ещё кнопки
-        
+    def draw_objects_2D(self):
+        self.screen.fill(BLACK)
+        for object1 in self.objects:
+            object1.draw_2D()
         
         
 def rescale():
@@ -282,10 +292,11 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
             draw1.objects[-1].set_coords((i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2))
     finished = False
     great_finish = False
+    FLAG = True
     while not great_finish:
         
         while not finished and not great_finish:
-            draw1.draw_menu()
+            draw1.draw_menu()                             #ТИПА МЕНЮ (FIXIT)
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     great_finish = True
@@ -299,10 +310,16 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
         finished = False
         while not finished and not great_finish:
             draw1.objects[1].rotate_local_y(0.2) #поворот объекта 1 на 0.2 радиана каждый кадр
-            draw1.draw_objects_3D()              #отрисовка объектов
+            if FLAG == True:
+                draw1.draw_objects_2D()              #отрисовка объектов
+            else:
+                draw1.draw_objects_3D()
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     finished = True
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_1:
+                        FLAG = not FLAG
                 draw1.camera.control(event)
             pg.display.set_caption(str(clock.get_fps()))
             pg.display.update()
