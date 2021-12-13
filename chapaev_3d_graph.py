@@ -110,6 +110,13 @@ class Object_3D:
         visibility - if True, then visibу, else - invisible
         pos = tuple 3 int
     '''
+    cube = (np.array([(-RADIUS//2, 0, -RADIUS//2, 1),
+                    (-RADIUS//2, RADIUS, -RADIUS//2, 1),
+                    (RADIUS//2, RADIUS, -RADIUS//2, 1),
+                    (RADIUS//2, 0, -RADIUS//2, 1), (-RADIUS//2, 0, RADIUS//2, 1),
+                    (-RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, RADIUS, RADIUS//2, 1),
+                    (RADIUS//2, 0, RADIUS//2, 1)]),
+                    np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     def __init__(self, render, points, faces, color, pos):
         self.screen = render.screen
         self.camera = render.camera
@@ -277,23 +284,12 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
 
     for i in range(2):
         for j in range(8):
+            pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
             if i % 2 == 0:
-                draw1.create_object(np.array([(-RADIUS//2, 0, -RADIUS//2, 1),
-                                              (-RADIUS//2, RADIUS, -RADIUS//2, 1),
-                                              (RADIUS//2, RADIUS, -RADIUS//2, 1),
-                                              (RADIUS//2, 0, -RADIUS//2, 1), (-RADIUS//2, 0, RADIUS//2, 1),
-                                              (-RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, RADIUS, RADIUS//2, 1),
-                                            (RADIUS//2, 0, RADIUS//2, 1)]),
-                                    np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]),
-                                    GREEN, (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)) #куб (пока что)
+                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], GREEN, pos) #куб (пока что)
             else:
-                draw1.create_object(np.array([(-RADIUS//2, 0, -RADIUS//2, 1), (-RADIUS//2, RADIUS, -RADIUS//2, 1),
-                                              (RADIUS//2, RADIUS, -RADIUS//2, 1), (RADIUS//2, 0, -RADIUS//2, 1),
-                                              (-RADIUS//2, 0, RADIUS//2, 1), (-RADIUS//2, RADIUS, RADIUS//2, 1),
-                                              (RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, 0, RADIUS//2, 1)]),
-                                    np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]),
-                                    RED, (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)) #куб (пока что)
-            draw1.objects[-1].set_coords((i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2))
+                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], RED, pos) #куб (пока что)
+            draw1.objects[-1].set_coords(pos)
     finished = False
     great_finish = False
     FLAG = True
