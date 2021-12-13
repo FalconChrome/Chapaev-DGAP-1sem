@@ -20,8 +20,8 @@ HALF_HEIGHT = HEIGHT // 2
 
 # Game settings
 
-TILE = 20 #Length of one tile in chessboard
-RADIUS = 10 #Radius of the "шашка"
+TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
+RADIUS = TILE // 2 #Radius of the "шашка"
 
 # BUTTONs
 
@@ -36,4 +36,3 @@ class Button():
         self.text = text
 
 BUT_1 = Button(RED, 'START', (HALF_WIDTH - 50, HALF_HEIGHT - 25), 100, 50)
-        
