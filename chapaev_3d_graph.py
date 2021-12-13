@@ -6,7 +6,49 @@
     '''
 import pygame as pg
 import numpy as np
-from config import *
+
+
+
+# COLORS
+    
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+# pygame settings
+
+WIDTH = 800
+HEIGHT = 600
+FPS = 30
+HALF_WIDTH = WIDTH // 2
+HALF_HEIGHT = HEIGHT // 2
+
+# Game settings
+
+TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
+RADIUS = TILE // 2 #Radius of the "шашка"
+
+# BUTTONs
+
+class Button():
+    ''' button with color (tuple 3 int), text (str), text_size - int, pos - center (tuple 2 int),
+        width (int) and height (int)'''
+    def __init__(self, color, text, text_size, pos, width, height):
+        self.color = color
+        self.x, self.y = pos
+        self.pos = (self.x - width / 2, self.y - height / 2)
+        self.x, self.y = self.pos
+        self.width = width
+        self.height = height
+        self.font = pg.font.SysFont('Comic Sans MS', text_size)
+        self.text = self.font.render(text, True, [0, 0, 0])
+        self.text_width, self.text_height = self.font.size(text)
+        self.textpos = (self.x + (self.width - self.text_width) / 2 , self.y + (self.height - self.text_height) / 2)
+    def draw(self, screen):
+        pg.draw.rect(screen, self.color, (self.pos, (self.width, self.height)))#FIXIT нужен текст, + ещё кнопки
+        screen.blit(self.text, self.textpos)
 
 class Projection:
     def __init__(self, render):
@@ -123,13 +165,12 @@ class Object_3D:
         visibility - if True, then visibу, else - invisible
         pos = tuple 3 int
     '''
-    cube = (np.array([(-RADIUS//2, 0, -RADIUS//2, 1),
-                    (-RADIUS//2, RADIUS, -RADIUS//2, 1),
-                    (RADIUS//2, RADIUS, -RADIUS//2, 1),
-                    (RADIUS//2, 0, -RADIUS//2, 1), (-RADIUS//2, 0, RADIUS//2, 1),
-                    (-RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, RADIUS, RADIUS//2, 1),
-                    (RADIUS//2, 0, RADIUS//2, 1)]),
-                    np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
+    cube = (np.array([(-RADIUS/2, 0, -RADIUS/2, 1), (-RADIUS/2, RADIUS, -RADIUS/2, 1),
+                    (RADIUS/2, RADIUS, -RADIUS/2, 1),(RADIUS/2, 0, -RADIUS/2, 1),
+                      (-RADIUS/2, 0, RADIUS/2, 1), (-RADIUS/2, RADIUS, RADIUS/2, 1),
+                      (RADIUS/2, RADIUS, RADIUS/2, 1), (RADIUS/2, 0, RADIUS/2, 1)]),
+                    np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
+                              (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
     def __init__(self, render, points, faces, color, pos):
         self.screen = render.screen
@@ -267,8 +308,9 @@ class Render():
     def draw_menu(self):  #FIXIT
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
-        pg.draw.rect(self.screen, BUT_1.color, (BUT_1.pos, (BUT_1.width, BUT_1.height)))#FIXIT нужен текст, + ещё кнопки
-
+        BUT_START.draw(self.screen)
+        BUT_NAME.draw(self.screen)
+        BUT_SETTINGS.draw(self.screen)
     def draw_objects_2D(self):
         self.screen.fill(BLACK)
         for object1 in self.objects:
@@ -304,9 +346,15 @@ def rescale():
 if __name__ == "__main__": # This module will be not callable, this is temporary, just while testing
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
+    pg.font.init()
     clock = pg.time.Clock()
     draw1 = Render(screen) # экземпляр класса отрисовки
     draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE, (0, 0, 0))
+
+    BUT_START = Button(RED, 'START', 20, (HALF_WIDTH, HALF_HEIGHT), 125, 50)
+    BUT_NAME = Button(RED, 'WRITE YOUR NAME', 10, (HALF_WIDTH, HALF_HEIGHT -100), 125, 50)
+    BUT_SETTINGS = Button(RED, 'SETTINGS', 20, (HALF_WIDTH, HALF_HEIGHT +100), 125, 50)
+
     
     for i in range(2):
         for j in range(8):
