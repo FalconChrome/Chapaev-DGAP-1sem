@@ -117,6 +117,7 @@ class Object_3D:
                     (-RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, RADIUS, RADIUS//2, 1),
                     (RADIUS//2, 0, RADIUS//2, 1)]),
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
+    board = ()
     def __init__(self, render, points, faces, color, pos):
         self.screen = render.screen
         self.camera = render.camera
@@ -180,7 +181,15 @@ class Object_3D:
         self.rotate_y(angle)
         self.set_coords(self.pos)
 
-
+def calculate():
+    A = np.empty(shape=(81,4), dtype = int)
+    for i in range(9):
+        for j in range(9):
+            A[i*9+j] = (i*TILE, 0, j*TILE, 1)
+    B = np.empty(shape = (64, 4), dtype = int)
+    for i in range(8):
+        for j in range(8):
+            B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
 
 def translate(pos):
     ''' pos - tuple of 3 float'''
@@ -266,6 +275,13 @@ def rescale():
 
 '''if __name__ == "__main__":
     print('THIS MODULE NOT FOR DIRECT CALL') '''
+
+'''
+    draw1 = Render(screen)
+    
+
+'''
+
 
 if __name__ == "__main__": # This module will be not callable, this is temporary, just while testing
     pg.init()
