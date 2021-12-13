@@ -1,6 +1,9 @@
 # Graphics for Chapaev 3D with poligons
 ''' Camera control: wasd, to change angle use LEFT,RIGHT.
-    UP and DOWN didn't work well                         '''
+    UP and DOWN didn't work well
+
+    !!!ATTENTION!!! левосторонняя система координат xyz - y = 0 - плоскость событий
+    '''
 import pygame as pg
 import numpy as np
 from config import *
@@ -101,6 +104,16 @@ class Camera:
     def camera_matrix(self):
         return self.translate_matrix() @ self.rotate_matrix()
 
+def calculate_board():
+    A = np.empty(shape=(81,4), dtype = int)
+    for i in range(9):
+        for j in range(9):
+            A[i*9+j] = (i*TILE, 0, j*TILE, 1)
+    B = np.empty(shape = (64, 4), dtype = int)
+    for i in range(8):
+        for j in range(8):
+            B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
+    return A, B
 
 class Object_3D:
     ''' render - Render obgect
@@ -117,7 +130,7 @@ class Object_3D:
                     (-RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, RADIUS, RADIUS//2, 1),
                     (RADIUS//2, 0, RADIUS//2, 1)]),
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
-    board = ()
+    board = calculate_board()
     def __init__(self, render, points, faces, color, pos):
         self.screen = render.screen
         self.camera = render.camera
@@ -181,16 +194,7 @@ class Object_3D:
         self.rotate_y(angle)
         self.set_coords(self.pos)
 
-def calculate():
-    A = np.empty(shape=(81,4), dtype = int)
-    for i in range(9):
-        for j in range(9):
-            A[i*9+j] = (i*TILE, 0, j*TILE, 1)
-    B = np.empty(shape = (64, 4), dtype = int)
-    for i in range(8):
-        for j in range(8):
-            B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
-
+    
 def translate(pos):
     ''' pos - tuple of 3 float'''
     tx, ty, tz = pos
@@ -259,10 +263,12 @@ class Render():
         self.screen.fill(BLACK)
         for object1 in self.objects:
             object1.draw()
+
     def draw_menu(self):  #FIXIT
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
         pg.draw.rect(self.screen, BUT_1.color, (BUT_1.pos, (BUT_1.width, BUT_1.height)))#FIXIT нужен текст, + ещё кнопки
+
     def draw_objects_2D(self):
         self.screen.fill(BLACK)
         for object1 in self.objects:
@@ -276,10 +282,22 @@ def rescale():
 '''if __name__ == "__main__":
     print('THIS MODULE NOT FOR DIRECT CALL') '''
 
-'''
-    draw1 = Render(screen)
-    
-
+'''   TUTORIAL
+    draw1 = Render(screen) - example of initialization class Render
+    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE, (0, 0, 0)) - 
+        Object_3D.board[0] - numpy array of points
+        Object_3D.board[1] - numpy array of faces
+        WHITE - color
+        (0, 0, 0) - position of local sistem coords.
+        Object_3D.cube - same with board - tuple of 2 numpy arrays
+    draw1.objects[-1].set_coords(pos) - in future - set new coords in global sistem
+        [-1] - last object in array
+    draw1.draw_menu() - draw menu. Nothing else.
+    draw1.objects[1].rotate_local_y(0.2) - rotate object around it's local oy (vertical)
+        0.2 - angle 
+    draw1.draw_objects_2D() - draw objects in 3D
+    draw1.draw_objects_3D() - draw objects in 2D
+    draw1.camera.control() - motion camera (MAYBE PUT IT IN MAIN)
 '''
 
 
@@ -288,16 +306,8 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     draw1 = Render(screen) # экземпляр класса отрисовки
-    A = np.empty(shape=(81,4), dtype = int)
-    for i in range(9):
-        for j in range(9):
-            A[i*9+j] = (i*TILE, 0, j*TILE, 1)
-    B = np.empty(shape = (64, 4), dtype = int)
-    for i in range(8):
-        for j in range(8):
-            B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
-    draw1.create_object(A, B, WHITE, (0, 0, 0))
-
+    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE, (0, 0, 0))
+    
     for i in range(2):
         for j in range(8):
             pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
@@ -305,7 +315,8 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
                 draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], GREEN, pos) #куб (пока что)
             else:
                 draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], RED, pos) #куб (пока что)
-            draw1.objects[-1].set_coords(pos)
+            draw1.objects[-1].translate(pos) #Changed
+    
     finished = False
     great_finish = False
     FLAG = True
@@ -336,7 +347,7 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_1:
                         FLAG = not FLAG
-                draw1.camera.control(event)
+                draw1.camera.control()
             pg.display.set_caption(str(clock.get_fps()))
             pg.display.update()
             clock.tick(FPS)
