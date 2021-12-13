@@ -45,7 +45,7 @@ class Camera:
         self.moving_speed = 0.02*TILE #Скорость камеры
         self.rot_speed = 0.03 #changing angle speed
 
-    def control(self, event):   #Part of dispetcherisation
+    def control(self):   #Part of dispetcherisation
         key = pg.key.get_pressed()
         if key[pg.K_a]:
             self.pos -= self.ox * self.moving_speed
