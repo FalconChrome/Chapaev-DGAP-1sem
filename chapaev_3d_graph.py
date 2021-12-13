@@ -29,11 +29,11 @@ class Projection:
             [0, -HH, 0, 0],
             [0, 0, 1, 0],
             [HW, HH, 0, 1]               ])
-        
-        
+
+
 
 class Camera:
-    def __init__(self, render, position):
+    def __init__(self, position):
         self.pos = np.array([*position, 1.0]) #coords of camera
         self.ox = np.array([1, 0, 0, 1]) #axes
         self.oy = np.array([0, 1, 0, 1])
@@ -44,7 +44,7 @@ class Camera:
         self.far_plane = 1000
         self.moving_speed = 0.02*TILE #Скорость камеры
         self.rot_speed = 0.03 #changing angle speed
-    
+
     def control(self, event):   #Part of dispetcherisation
         key = pg.key.get_pressed()
         if key[pg.K_a]:
@@ -67,7 +67,7 @@ class Camera:
             self.camera_rot_x(-self.rot_speed)
         if key[pg.K_DOWN]:
             self.camera_rot_x(self.rot_speed)
-            
+
 
     def camera_rot_y(self, angle):
         rotate = rotate_y(angle)
@@ -80,8 +80,8 @@ class Camera:
         self.ox = self.ox @ rotate
         self.oy = self.oy @ rotate
         self.oz = self.oz @ rotate
-        
-        
+
+
     def translate_matrix(self):
         x, y, z, w = self.pos
         return np.array([
@@ -100,7 +100,7 @@ class Camera:
             [0, 0, 0, 1]])
     def camera_matrix(self):
         return self.translate_matrix() @ self.rotate_matrix()
-        
+
 
 class Object_3D:
     ''' render - Render obgect
@@ -111,7 +111,11 @@ class Object_3D:
         pos = tuple 3 int
     '''
     def __init__(self, render, points, faces, color, pos):
-        self.render = render
+        self.screen = render.screen
+        self.camera = render.camera
+        self.projection = render.projection
+        self.H_WIDTH = render.H_WIDTH
+        self.H_HEIGHT = render.H_HEIGHT
         self.points = points
         self.color = color
         self.faces = faces
@@ -121,38 +125,38 @@ class Object_3D:
     def draw(self):
         if self.visibility:
             self.screen_projection()
-    
+
     def draw_2D(self):
         if self.visibility:
             points_screen = self.points[:, ::2]
             for face in self.faces:
                 polygon = points_screen[face]
-                pg.draw.polygon(self.render.screen, self.color, polygon, 3)
-            
-    
+                pg.draw.polygon(self.screen, self.color, polygon, 3)
+
+
     def screen_projection(self):
-        points = self.points @ self.render.camera.camera_matrix()
-        points = points @ self.render.projection.projection_matrix
+        points = self.points @ self.camera.camera_matrix()
+        points = points @ self.projection.projection_matrix
         points /= points[:, -1].reshape(-1, 1)
         points[(points > 2) | (points < -2)] = 0
-        points = points @ self.render.projection.to_screen_matrix
+        points = points @ self.projection.to_screen_matrix
         points_screen = points[:, :2]
-        
+
         for face in self.faces:
             polygon = points_screen[face]
-            if not np.any((polygon == self.render.H_WIDTH)|(polygon == self.render.H_HEIGHT)):  #check out of drawing range
-                pg.draw.polygon(self.render.screen, self.color, polygon, 3)
-                    
-                
-    def set_coords(self, pos):                          
+            if not np.any((polygon == self.H_WIDTH)|(polygon == self.H_HEIGHT)):  #check out of drawing range
+                pg.draw.polygon(self.screen, self.color, polygon, 3)
+
+
+    def set_coords(self, pos):
         self.points = self.points @ translate(pos)        # Вращение и перемещение в глобальной системе координат
-    
+
     def translate(self, pos):
         self.points = self.points @ translate(pos)
 
     def scale(self, sc):
         self.points = self.points @ scale(sc)
-        
+
     def rotate_x(self, angle):
         self.points = self.points @ rotate_x(angle)
 
@@ -161,16 +165,16 @@ class Object_3D:
 
     def rotate_z(self, angle):
         self.points = self.points @ rotate_z(angle)
-    
+
     def rotate_local_y(self, angle):
         t1, t2, t3 = self.pos
         anti_pos = -t1, -t2, -t3
         self.set_coords(anti_pos)
         self.rotate_y(angle)
         self.set_coords(self.pos)
-        
-        
-    
+
+
+
 def translate(pos):
     ''' pos - tuple of 3 float'''
     tx, ty, tz = pos
@@ -218,20 +222,20 @@ class Render():
     '''
 
 
-    
+
     def __init__(self, screen):
         self.objects = []  # First will be board, then cheese
         self.screen = screen
         self.RES = self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
         self.H_WIDTH, self.H_HEIGHT = WIDTH // 2, HEIGHT // 2
-        self.camera = Camera(self, [0.5*TILE, TILE,-4*TILE])
+        self.camera = Camera([0.5*TILE, TILE,-4*TILE])
         self.projection = Projection(self)
-        
+
     def create_object(self, points, faces, color, pos):
         ''' Создание объекта для отрисовки'''
         object1 = Object_3D(self, points, faces, color, pos)
         self.objects.append(object1)
-        
+
     def draw_objects_3D(self):
         ''' Метод для отрисовки объектов в 3D (пока на чёрном фоне)
             отрисовка зависит от положения объектов и от положения камеры
@@ -247,8 +251,8 @@ class Render():
         self.screen.fill(BLACK)
         for object1 in self.objects:
             object1.draw_2D()
-        
-        
+
+
 def rescale():
     '''This function will scale coords, if we need'''
     pass
@@ -270,7 +274,7 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
         for j in range(8):
             B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
     draw1.create_object(A, B, WHITE, (0, 0, 0))
-    
+
     for i in range(2):
         for j in range(8):
             if i % 2 == 0:
@@ -294,7 +298,7 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
     great_finish = False
     FLAG = True
     while not great_finish:
-        
+
         while not finished and not great_finish:
             draw1.draw_menu()                             #ТИПА МЕНЮ (FIXIT)
             for event in pg.event.get():
@@ -306,7 +310,7 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
             pg.display.set_caption(str(clock.get_fps()))
             pg.display.update()
             clock.tick(FPS)
-        
+
         finished = False
         while not finished and not great_finish:
             draw1.objects[1].rotate_local_y(0.2) #поворот объекта 1 на 0.2 радиана каждый кадр
@@ -325,5 +329,5 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
             pg.display.update()
             clock.tick(FPS)
         finished = False
-        
+
     pg.quit()
