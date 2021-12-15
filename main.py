@@ -1,7 +1,7 @@
 import pygame
 from pygame import mouse, Vector2
 # import chapaev_3d_graph as graph
-from chapaev_3d_graph import Render
+from chapaev_3d_graph import Render, Object_3D
 import enum
 import numpy as np
 from config import *
@@ -69,29 +69,16 @@ class GameController:
 
         self.render = Render(self.screen)
         #temporary, just while testing
-        A = np.empty(shape=(81,4), dtype = int)
-        for i in range(9):
-            for j in range(9):
-                A[i*9+j] = (i*TILE, 0, j*TILE, 1)
-        B = np.empty(shape = (64, 4), dtype = int)
-        for i in range(8):
-            for j in range(8):
-                B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
-        self.render.create_object(A, B, WHITE, (0, 0, 0))
-
+        self.render.create_object(Object_3D.board[0], Object_3D.board[1], WHITE)
         for i in range(2):
             for j in range(8):
-                # self.render.create_object(np.array([(RADIUS * (k % 2)) for k in range(100)])
-                self.render.create_object(np.array([(-RADIUS//2, 0, -RADIUS//2, 1),
-                                              (-RADIUS//2, RADIUS, -RADIUS//2, 1),
-                                              (RADIUS//2, RADIUS, -RADIUS//2, 1),
-                                              (RADIUS//2, 0, -RADIUS//2, 1), (-RADIUS//2, 0, RADIUS//2, 1),
-                                              (-RADIUS//2, RADIUS, RADIUS//2, 1), (RADIUS//2, RADIUS, RADIUS//2, 1),
-                                            (RADIUS//2, 0, RADIUS//2, 1)]),
-                                    np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),(1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]),
-                                    (GREEN, RED)[i], (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)) #куб (пока что)
-                self.render.objects[-1].set_coords((i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2))
-
+                pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
+                if i % 2 == 0:
+                    self.render.create_object(Object_3D.cube[0], Object_3D.cube[1], GREEN) #куб (пока что)
+                else:
+                    self.render.create_object(Object_3D.cube[0], Object_3D.cube[1], RED) #куб (пока что)
+                self.render.objects[-1].translate(pos) #Change
+    
     def init(self, restart_option):
         # model init
         print('init', restart_option)
