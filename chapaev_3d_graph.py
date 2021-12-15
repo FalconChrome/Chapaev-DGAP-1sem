@@ -19,7 +19,7 @@ WHITE = (255, 255, 255)
 
 # pygame settings
 
-WIDTH = 800
+WIDTH = 600
 HEIGHT = 600
 FPS = 30
 HALF_WIDTH = WIDTH // 2
@@ -90,7 +90,7 @@ class Camera:
         self.moving_speed = 0.02*TILE #Скорость камеры
         self.rot_speed = 0.03 #changing angle speed
 
-    def control(self):   #Part of dispetcherisation
+    def control(self):   #Part of dispetcherisation (MAYBE KILL IT?)
         key = pg.key.get_pressed()
         if key[pg.K_a]:
             self.pos -= self.ox * self.moving_speed
@@ -147,10 +147,11 @@ class Camera:
         return self.translate_matrix() @ self.rotate_matrix()
 
 def calculate_board():
-    A = np.empty(shape=(81,4), dtype = int)
+    A = np.empty(shape=(82,4), dtype = int)
     for i in range(9):
         for j in range(9):
             A[i*9+j] = (i*TILE, 0, j*TILE, 1)
+    A[81] = (0, 0, 0, 1)
     B = np.empty(shape = (64, 4), dtype = int)
     for i in range(8):
         for j in range(8):
@@ -168,11 +169,12 @@ class Object_3D:
     cube = (np.array([(-RADIUS/2, 0, -RADIUS/2, 1), (-RADIUS/2, RADIUS, -RADIUS/2, 1),
                     (RADIUS/2, RADIUS, -RADIUS/2, 1),(RADIUS/2, 0, -RADIUS/2, 1),
                       (-RADIUS/2, 0, RADIUS/2, 1), (-RADIUS/2, RADIUS, RADIUS/2, 1),
-                      (RADIUS/2, RADIUS, RADIUS/2, 1), (RADIUS/2, 0, RADIUS/2, 1)]),
+                      (RADIUS/2, RADIUS, RADIUS/2, 1), (RADIUS/2, 0, RADIUS/2, 1), (0, 0, 0, 1)]),
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
-    def __init__(self, render, points, faces, color, pos):
+    def __init__(self, render, points, faces, color):
+        self.render = render
         self.screen = render.screen
         self.camera = render.camera
         self.projection = render.projection
@@ -182,10 +184,11 @@ class Object_3D:
         self.color = color
         self.faces = faces
         self.visibility = True
-        self.pos = pos
+        self.pos = points[-1]
 
     def draw(self):
         if self.visibility:
+            self.camera = self.render.camera
             self.screen_projection()
 
     def draw_2D(self):
@@ -209,12 +212,17 @@ class Object_3D:
             if not np.any((polygon == self.H_WIDTH)|(polygon == self.H_HEIGHT)):  #check out of drawing range
                 pg.draw.polygon(self.screen, self.color, polygon, 3)
 
-
+    def change_pos(self, pos):
+        x0, y0, z0, w0 = self.pos
+        x1, y1, z1 = pos
+        self.pos = (x0 + x1, y0 + y1, z0 + z1, w0)
+    
     def set_coords(self, pos):
         self.points = self.points @ translate(pos)        # Вращение и перемещение в глобальной системе координат
 
     def translate(self, pos):
         self.points = self.points @ translate(pos)
+        self.change_pos(pos)
 
     def scale(self, sc):
         self.points = self.points @ scale(sc)
@@ -229,11 +237,12 @@ class Object_3D:
         self.points = self.points @ rotate_z(angle)
 
     def rotate_local_y(self, angle):
-        t1, t2, t3 = self.pos
+        t1, t2, t3, t4 = self.pos
+        pos = t1, t2, t3
         anti_pos = -t1, -t2, -t3
         self.set_coords(anti_pos)
         self.rotate_y(angle)
-        self.set_coords(self.pos)
+        self.set_coords(pos)
 
     
 def translate(pos):
@@ -271,6 +280,13 @@ def scale(a):
         [0, 0, a, 0],
         [0, 0, 0, 1]])
 
+def calculate_cam(pos, angle_x, angle_y):
+    CAM = Camera([0, 0, 0])
+    CAM.camera_rot_y(angle_y)
+    CAM.camera_rot_x(angle_x)
+    CAM.pos = [*pos, 1.0]
+    return CAM
+    
 class Render():
     ''' The big main class, that draw everything
         __init__ - take screen - pygame screen
@@ -281,20 +297,29 @@ class Render():
         2) draw_objects_3D - drawing obgects in 3D
         3) draw_menu - drawing main screen
     '''
-
-
-
+    
+    CAMS = [calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0),           # !!! Render cams, you can change them, to observe the field
+            calculate_cam([-7*TILE, 2*TILE, 4*TILE], 0, np.pi / 2),        #     Also you can move them, but dispetcherisation not from
+            calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi),            #     main module is bad, so, I think it is not necessary to 
+            calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2)]  #     have ability to move camera during the game
+    
     def __init__(self, screen):
         self.objects = []  # First will be board, then cheese
         self.screen = screen
         self.RES = self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
         self.H_WIDTH, self.H_HEIGHT = WIDTH // 2, HEIGHT // 2
-        self.camera = Camera([0.5*TILE, TILE,-4*TILE])
+        self.cam_number = 0
+        self.camera = Render.CAMS[self.cam_number]
         self.projection = Projection(self)
+        self.menu_background = pg.image.load('chapaev.jpg')
+        self.menu_background_rect = self.menu_background.get_rect(bottomright=(WIDTH, HEIGHT))
+        self.game_background = pg.image.load('chessboard_texture.png')
+        self.game_background = pg.transform.scale(self.game_background,(WIDTH, HEIGHT))
+        self.game_background_rect = self.game_background.get_rect(bottomright=(WIDTH, HEIGHT))
 
-    def create_object(self, points, faces, color, pos):
+    def create_object(self, points, faces, color):
         ''' Создание объекта для отрисовки'''
-        object1 = Object_3D(self, points, faces, color, pos)
+        object1 = Object_3D(self, points, faces, color)
         self.objects.append(object1)
 
     def draw_objects_3D(self):
@@ -302,19 +327,27 @@ class Render():
             отрисовка зависит от положения объектов и от положения камеры
         '''
         self.screen.fill(BLACK)
-        for object1 in self.objects:
+        for object1 in self.objects:         #pygame.gfxdraw.textured_polygon(screen, face_list[i], obj.texture, 0, 0) maybe :]
             object1.draw()
 
-    def draw_menu(self):  #FIXIT
+    def draw_menu(self):  #FIXIT (this must be beautiful)
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
+        self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
         BUT_START.draw(self.screen)
-        BUT_NAME.draw(self.screen)
+        BUT_NAME.draw(self.screen) 
         BUT_SETTINGS.draw(self.screen)
     def draw_objects_2D(self):
+        ''' This method draw 2D projection of objects (on a surface y = 0)'''
         self.screen.fill(BLACK)
+        self.screen.blit(self.game_background, self.game_background_rect)
         for object1 in self.objects:
             object1.draw_2D()
+    def change_cam(self):
+        ''' this method change cams one by one in Render.CAMS '''
+        self.cam_number = (self.cam_number + 1) % len(Render.CAMS)
+        self.camera = Render.CAMS[self.cam_number]
+        
 
 
 def rescale():
@@ -326,11 +359,10 @@ def rescale():
 
 '''   TUTORIAL
     draw1 = Render(screen) - example of initialization class Render
-    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE, (0, 0, 0)) - 
+    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE) - 
         Object_3D.board[0] - numpy array of points
         Object_3D.board[1] - numpy array of faces
         WHITE - color
-        (0, 0, 0) - position of local sistem coords.
         Object_3D.cube - same with board - tuple of 2 numpy arrays
     draw1.objects[-1].set_coords(pos) - in future - set new coords in global sistem
         [-1] - last object in array
@@ -349,7 +381,7 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
     pg.font.init()
     clock = pg.time.Clock()
     draw1 = Render(screen) # экземпляр класса отрисовки
-    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE, (0, 0, 0))
+    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE)
 
     BUT_START = Button(RED, 'START', 20, (HALF_WIDTH, HALF_HEIGHT), 125, 50)
     BUT_NAME = Button(RED, 'WRITE YOUR NAME', 10, (HALF_WIDTH, HALF_HEIGHT -100), 125, 50)
@@ -360,9 +392,9 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
         for j in range(8):
             pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
             if i % 2 == 0:
-                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], GREEN, pos) #куб (пока что)
+                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], GREEN) #куб (пока что)
             else:
-                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], RED, pos) #куб (пока что)
+                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], RED) #куб (пока что)
             draw1.objects[-1].translate(pos) #Changed
     
     finished = False
@@ -383,8 +415,11 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
             clock.tick(FPS)
 
         finished = False
+        motion = False
         while not finished and not great_finish:
-            draw1.objects[1].rotate_local_y(0.2) #поворот объекта 1 на 0.2 радиана каждый кадр
+            if motion:
+                draw1.objects[1].rotate_local_y(0.2) #поворот объекта 1 на 0.2 радиана каждый кадр
+                draw1.objects[1].translate((1, 0, 0))
             if FLAG == True:
                 draw1.draw_objects_2D()              #отрисовка объектов
             else:
@@ -395,6 +430,10 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_1:
                         FLAG = not FLAG
+                    if event.key == pg.K_2:
+                        draw1.change_cam()
+                    if event.key == pg.K_SPACE:
+                        motion = not motion
                 draw1.camera.control()
             pg.display.set_caption(str(clock.get_fps()))
             pg.display.update()
