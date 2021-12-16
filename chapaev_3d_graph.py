@@ -322,9 +322,9 @@ class Render():
             calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi),            #     main module is bad, so, I think it is not necessary to
             calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2)]  #     have ability to move camera during the game
 
-    def __init__(self, screen):
+    def __init__(self):
         self.objects = []  # First will be board, then cheese
-        self.screen = screen
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         self.RES = self.WIDTH, self.HEIGHT = WIDTH, HEIGHT
         self.H_WIDTH, self.H_HEIGHT = WIDTH // 2, HEIGHT // 2
         self.cam_number = 0
