@@ -9,13 +9,14 @@ import pygame as pg
 import numpy as np
 
 # COLORS
-    
+
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
+PLAYERCOLORS = (GREEN, RED)
 # pygame settings
 
 WIDTH = 600
@@ -214,7 +215,7 @@ class Object_3D:
         x0, y0, z0, w0 = self.pos
         x1, y1, z1 = pos
         self.pos = (x0 + x1, y0 + y1, z0 + z1, w0)
-    
+
     def set_coords(self, pos):
         self.points = self.points @ translate(pos)        # Вращение и перемещение в глобальной системе координат
 
@@ -245,7 +246,7 @@ class Object_3D:
         ''' Создал этот метод только ради сохранения ООП (инкапсуляция) '''
         self.camera = camera
 
-    
+
 def translate(pos):
     ''' pos - tuple of 3 float'''
     tx, ty, tz = pos
@@ -287,7 +288,7 @@ def calculate_cam(pos, angle_x, angle_y):
     CAM.camera_rot_x(angle_x)
     CAM.pos = [*pos, 1.0]
     return CAM
-    
+
 class Render():
     ''' The big main class, that draw everything
         __init__ - take screen - pygame screen
@@ -298,12 +299,12 @@ class Render():
         2) draw_objects_3D - drawing obgects in 3D
         3) draw_menu - drawing main screen
     '''
-    
+
     CAMS = [calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0),           # !!! Render cams, you can change them, to observe the field
             calculate_cam([-7*TILE, 2*TILE, 4*TILE], 0, np.pi / 2),        #     Also you can move them, but dispetcherisation not from
-            calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi),            #     main module is bad, so, I think it is not necessary to 
+            calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi),            #     main module is bad, so, I think it is not necessary to
             calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2)]  #     have ability to move camera during the game
-    
+
     def __init__(self, screen):
         self.objects = []  # First will be board, then cheese
         self.screen = screen
@@ -336,7 +337,7 @@ class Render():
         self.screen.fill(BLACK)
         self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
         BUT_START.draw(self.screen)
-        BUT_NAME.draw(self.screen) 
+        BUT_NAME.draw(self.screen)
         BUT_SETTINGS.draw(self.screen)
     def draw_objects_2D(self):
         ''' This method draw 2D projection of objects (on a surface y = 0)'''
@@ -350,7 +351,23 @@ class Render():
         self.camera = Render.CAMS[self.cam_number]
         for obj in self.objects:
             obj.change_cam(self.camera)
-        
+
+    def create_objects3D(self, type, color):
+        '''wrapper for creating 3D objects'''
+        if type == "cube":
+            object = Object_3D.cube
+        elif type == "board":
+            object = Object_3D.board
+        self.create_object(object[0], object[1], color)
+
+    def generate_game_objects(self):
+        # temporary, just while testing
+        self.create_objects3D("board", WHITE)
+        for i, color in enumerate(PLAYERCOLORS):
+            for j in range(8):
+                pos = (i * 7 * TILE + TILE // 2, 0, j * TILE + TILE // 2)
+                self.create_objects3D("cube", color)
+                self.objects[-1].translate(pos)
 
 
 def rescale():
@@ -362,7 +379,7 @@ def rescale():
 
 '''   TUTORIAL
     draw1 = Render(screen) - example of initialization class Render
-    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE) - 
+    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE) -
         Object_3D.board[0] - numpy array of points
         Object_3D.board[1] - numpy array of faces
         WHITE - color
@@ -371,7 +388,7 @@ def rescale():
         [-1] - last object in array
     draw1.draw_menu() - draw menu. Nothing else.
     draw1.objects[1].rotate_local_y(0.2) - rotate object around it's local oy (vertical)
-        0.2 - angle 
+        0.2 - angle
     draw1.draw_objects_2D() - draw objects in 3D
     draw1.draw_objects_3D() - draw objects in 2D
     draw1.camera.control() - motion camera (MAYBE PUT IT IN MAIN)
@@ -384,22 +401,22 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
     pg.font.init()
     clock = pg.time.Clock()
     draw1 = Render(screen) # экземпляр класса отрисовки
-    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE)
+    draw1.create_objects3D("board", WHITE)
 
     BUT_START = Button(RED, 'START', 20, (HALF_WIDTH, HALF_HEIGHT), 125, 50)
     BUT_NAME = Button(RED, 'WRITE YOUR NAME', 10, (HALF_WIDTH, HALF_HEIGHT -100), 125, 50)
     BUT_SETTINGS = Button(RED, 'SETTINGS', 20, (HALF_WIDTH, HALF_HEIGHT +100), 125, 50)
 
-    
+
     for i in range(2):
         for j in range(8):
             pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
             if i % 2 == 0:
-                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], GREEN) #куб (пока что)
+                draw1.create_objects3D("cube", GREEN) #куб (пока что)
             else:
-                draw1.create_object(Object_3D.cube[0], Object_3D.cube[1], RED) #куб (пока что)
+                draw1.create_objects3D("cube", RED) #куб (пока что)
             draw1.objects[-1].translate(pos) #Changed
-    
+
     finished = False
     great_finish = False
     FLAG = True

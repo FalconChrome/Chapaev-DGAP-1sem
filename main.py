@@ -1,9 +1,10 @@
 import pygame
 from pygame import mouse, Vector2
+from pygame import Color
 # import chapaev_3d_graph as graph
 from chapaev_3d_graph import Render, Object_3D
 import enum
-import numpy as np
+# import numpy as np
 from config import *
 
 # Checker = enum.Enum("Side", "black white")
@@ -57,7 +58,7 @@ class GameController:
     The controller of game play and event
     """
     GameStage = enum.Enum("GameStage", "View Turn Motion Restart")
-    size = 800, 600
+    size = 600, 600
 
     def __init__(self):
         """
@@ -66,19 +67,12 @@ class GameController:
         self.screen = pygame.display.set_mode(self.size)
         self.state = self.GameStage.View
         self.hit_control = HitHandler()
+        self.players = {"color": ("green", "red")}
+        self.player_colors = tuple(map(Color, self.players["color"]))
 
         self.render = Render(self.screen)
-        #temporary, just while testing
-        self.render.create_object(Object_3D.board[0], Object_3D.board[1], WHITE)
-        for i in range(2):
-            for j in range(8):
-                pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
-                if i % 2 == 0:
-                    self.render.create_object(Object_3D.cube[0], Object_3D.cube[1], GREEN) #куб (пока что)
-                else:
-                    self.render.create_object(Object_3D.cube[0], Object_3D.cube[1], RED) #куб (пока что)
-                self.render.objects[-1].translate(pos) #Change
-    
+        self.render.generate_game_objects()
+
     def init(self, restart_option):
         # model init
         print('init', restart_option)
@@ -122,7 +116,7 @@ class GameController:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.state = self.GameStage.Restart
-                    return Nones
+                    return None
             # when model stop flying
             self.state = self.GameStage.View
 
