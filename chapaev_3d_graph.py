@@ -1,7 +1,6 @@
 # Graphics for Chapaev 3D with poligons
 ''' Camera control: wasd, to change angle use LEFT,RIGHT.
     UP and DOWN didn't work well
-
     !!!ATTENTION!!! левосторонняя система координат xyz - y = 0 - плоскость событий
 '''
 
@@ -28,7 +27,7 @@ HALF_HEIGHT = HEIGHT // 2
 # Game settings
 
 TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
-RADIUS = TILE // 2             #Radius of the "шашка"
+RADIUS = TILE // 4             #Radius of the "шашка"
 
 # BUTTONs
 
@@ -148,7 +147,7 @@ class Camera:
         return self.translate_matrix() @ self.rotate_matrix()
 
 def calculate_board():
-    A = np.empty(shape=(82,4), dtype = int)
+    A = np.empty(shape=(82,4), dtype = float)
     for i in range(9):
         for j in range(9):
             A[i*9+j] = (i*TILE, 0, j*TILE, 1)
@@ -156,16 +155,33 @@ def calculate_board():
     B = np.empty(shape = (64, 4), dtype = int)
     for i in range(8):
         for j in range(8):
-            B[i*8 + j] = (i*9+j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
+            B[i*8 + j] = (i*9 + j, i*9 + j + 1, i*9 + j + 10, i*9 + j + 9)
+    return A, B
+
+def calculate_chees(N):
+    H = 15
+    A = np.empty(shape = (2*N + 1, 4), dtype = float)
+    B = np.empty(shape = (N, 4), dtype = int)
+    for i in range(N):
+        x = RADIUS * np.cos(2*np.pi * i / N)
+        z = RADIUS * np.sin(2*np.pi * i / N)
+        A[i] = (x, 0, z, 1)
+    for i in range(N , 2*N):
+        x = RADIUS * np.cos(2*np.pi * (i-N) / N)
+        z = RADIUS * np.sin(2*np.pi * (i-N) / N)
+        A[i] = (x, H, z, 1)
+    A[2*N] = (0, 0, 0, 1)
+    for i in range(N):
+        B[i] = (i, (i+1) % N, N + (i+1) % N, N+i)    
     return A, B
 
 class Object_3D:
     ''' render - Render obgect
-        points - numpy array of points
+        points - numpy array of points, last point - center of local sistem
         faces - numpy array of numbers of points, that together make faces
         color - tuple of 3 integer (0 - 255)
         visibility - if True, then visibу, else - invisible
-        pos = tuple 3 int
+        pos = tuple 4 float (last in points)
     '''
     cube = (np.array([(-RADIUS/2, 0, -RADIUS/2, 1), (-RADIUS/2, RADIUS, -RADIUS/2, 1),
                     (RADIUS/2, RADIUS, -RADIUS/2, 1),(RADIUS/2, 0, -RADIUS/2, 1),
@@ -174,6 +190,7 @@ class Object_3D:
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
+    chees = calculate_chees(20)
     def __init__(self, render, points, faces, color):
         self.screen = render.screen
         self.camera = render.camera
@@ -332,7 +349,7 @@ class Render():
         for object1 in self.objects:         #pygame.gfxdraw.textured_polygon(screen, face_list[i], obj.texture, 0, 0) maybe :]
             object1.draw()
 
-    def draw_menu(self):  #FIXIT (this must be beautiful)
+    def draw_menu(self):    #FIXIT (this must be beautiful)
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
         self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
@@ -354,10 +371,12 @@ class Render():
 
     def create_objects3D(self, type, color):
         '''wrapper for creating 3D objects'''
-        if type == "cube":
-            object = Object_3D.cube
+        if type == "chees":
+            object = Object_3D.chees
         elif type == "board":
             object = Object_3D.board
+        elif type == "cube":
+            object = Object_3D.cube
         self.create_object(object[0], object[1], color)
 
     def generate_game_objects(self):
@@ -366,7 +385,7 @@ class Render():
         for i, color in enumerate(PLAYERCOLORS):
             for j in range(8):
                 pos = (i * 7 * TILE + TILE // 2, 0, j * TILE + TILE // 2)
-                self.create_objects3D("cube", color)
+                self.create_objects3D("chees", color)
                 self.objects[-1].translate(pos)
 
 
@@ -412,10 +431,10 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
         for j in range(8):
             pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
             if i % 2 == 0:
-                draw1.create_objects3D("cube", GREEN) #куб (пока что)
+                draw1.create_objects3D("chees", GREEN) #куб (пока что)
             else:
                 draw1.create_objects3D("cube", RED) #куб (пока что)
-            draw1.objects[-1].translate(pos) #Changed
+            draw1.objects[-1].translate(pos) 
 
     finished = False
     great_finish = False
