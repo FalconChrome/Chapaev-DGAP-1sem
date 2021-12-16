@@ -3,11 +3,10 @@
     UP and DOWN didn't work well
 
     !!!ATTENTION!!! левосторонняя система координат xyz - y = 0 - плоскость событий
-    '''
+'''
+
 import pygame as pg
 import numpy as np
-
-
 
 # COLORS
     
@@ -28,13 +27,14 @@ HALF_HEIGHT = HEIGHT // 2
 # Game settings
 
 TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
-RADIUS = TILE // 2 #Radius of the "шашка"
+RADIUS = TILE // 2             #Radius of the "шашка"
 
 # BUTTONs
 
 class Button():
     ''' button with color (tuple 3 int), text (str), text_size - int, pos - center (tuple 2 int),
-        width (int) and height (int)'''
+        width (int) and height (int)
+    '''
     def __init__(self, color, text, text_size, pos, width, height):
         self.color = color
         self.x, self.y = pos
@@ -174,7 +174,6 @@ class Object_3D:
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
     def __init__(self, render, points, faces, color):
-        self.render = render
         self.screen = render.screen
         self.camera = render.camera
         self.projection = render.projection
@@ -188,7 +187,6 @@ class Object_3D:
 
     def draw(self):
         if self.visibility:
-            self.camera = self.render.camera
             self.screen_projection()
 
     def draw_2D(self):
@@ -243,6 +241,9 @@ class Object_3D:
         self.set_coords(anti_pos)
         self.rotate_y(angle)
         self.set_coords(pos)
+    def change_cam(self, camera):
+        ''' Создал этот метод только ради сохранения ООП (инкапсуляция) '''
+        self.camera = camera
 
     
 def translate(pos):
@@ -347,6 +348,8 @@ class Render():
         ''' this method change cams one by one in Render.CAMS '''
         self.cam_number = (self.cam_number + 1) % len(Render.CAMS)
         self.camera = Render.CAMS[self.cam_number]
+        for obj in self.objects:
+            obj.change_cam(self.camera)
         
 
 
