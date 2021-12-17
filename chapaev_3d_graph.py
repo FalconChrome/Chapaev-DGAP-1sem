@@ -28,12 +28,14 @@ HALF_HEIGHT = HEIGHT // 2
 
 TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
 RADIUS = TILE // 4             #Radius of the "шашка"
+CH_H = RADIUS 
 
 # BUTTONs
 
 class Button():
-    ''' button with color (tuple 3 int), text (str), text_size - int, pos - center (tuple 2 int),
-        width (int) and height (int)
+    '''
+    button with color (tuple 3 int), text (str), text_size - int, pos - center (tuple 2 int),
+    width (int) and height (int)
     '''
     def __init__(self, color, text, text_size, pos, width, height):
         self.color = color
@@ -80,7 +82,7 @@ class Projection:
 class Camera:
     def __init__(self, position):
         self.pos = np.array([*position, 1.0]) #coords of camera
-        self.ox = np.array([1, 0, 0, 1]) #axes
+        self.ox = np.array([-1, 0, 0, 1]) #axes
         self.oy = np.array([0, 1, 0, 1])
         self.oz = np.array([0, 0, 1, 1])
         self.h_fov = np.pi / 3
@@ -159,7 +161,7 @@ def calculate_board():
     return A, B
 
 def calculate_chees(N):
-    H = 15
+    H = CH_H
     A = np.empty(shape = (2*N + 1, 4), dtype = float)
     B = np.empty(shape = (N, 4), dtype = int)
     for i in range(N):
@@ -176,12 +178,13 @@ def calculate_chees(N):
     return A, B
 
 class Object_3D:
-    ''' render - Render obgect
-        points - numpy array of points, last point - center of local sistem
-        faces - numpy array of numbers of points, that together make faces
-        color - tuple of 3 integer (0 - 255)
-        visibility - if True, then visibу, else - invisible
-        pos = tuple 4 float (last in points)
+    '''
+    render - Render obgect
+    points - numpy array of points, last point - center of local sistem
+    faces - numpy array of numbers of points, that together make faces
+    color - tuple of 3 integer (0 - 255)
+    visibility - if True, then visibу, else - invisible
+    pos = tuple 4 float (last in points)
     '''
     cube = (np.array([(-RADIUS/2, 0, -RADIUS/2, 1), (-RADIUS/2, RADIUS, -RADIUS/2, 1),
                     (RADIUS/2, RADIUS, -RADIUS/2, 1),(RADIUS/2, 0, -RADIUS/2, 1),
@@ -190,7 +193,7 @@ class Object_3D:
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
-    chees = calculate_chees(20)
+    chees = calculate_chees(20) #20 - Ideal, 50 - max, over 200 - lagging
     def __init__(self, render, points, faces, color):
         self.screen = render.screen
         self.camera = render.camera
@@ -232,7 +235,11 @@ class Object_3D:
         self.pos = self.points[-1]
 
     def set_coords(self, pos):
-        self.points = self.points @ translate(pos)        # Вращение и перемещение в глобальной системе координат
+        ''' set coords pos in global sistem '''
+        t1, t2, t3, t4 = self.points[-1]
+        anti_pos_0 = (-t1, -t2, -t3)
+        self.points = self.points @ translate(anti_pos_0)
+        self.points = self.points @ translate(pos)
 
     def translate(self, pos):
         self.points = self.points @ translate(pos)
@@ -258,9 +265,8 @@ class Object_3D:
         self.rotate_y(angle)
         self.set_coords(pos)
     def change_cam(self, camera):
-        ''' Создал этот метод только ради сохранения ООП (инкапсуляция) '''
+        ''' function change camera '''
         self.camera = camera
-
 
 def translate(pos):
     ''' pos - tuple of 3 float'''
@@ -305,14 +311,15 @@ def calculate_cam(pos, angle_x, angle_y):
     return CAM
 
 class Render():
-    ''' The big main class, that draw everything
-        __init__ - take screen - pygame screen
-        methods:
-        1) create_object(self, poitns, faces, color)
-           creates object with position, that depends on the object definition
-           easily can be changed to any coords, by using Object_3D method set_coords
-        2) draw_objects_3D - drawing obgects in 3D
-        3) draw_menu - drawing main screen
+    '''
+    The big main class, that draw everything
+    __init__ - take screen - pygame screen
+    methods:
+    1) create_object(self, poitns, faces, color)
+    creates object with position, that depends on the object definition
+    easily can be changed to any coords, by using Object_3D method set_coords
+    2) draw_objects_3D - drawing obgects in 3D
+    3) draw_menu - drawing main screen
     '''
 
     CAMS = [calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0),           # !!! Render cams, you can change them, to observe the field
@@ -335,19 +342,20 @@ class Render():
         self.game_background_rect = self.game_background.get_rect(bottomright=(WIDTH, HEIGHT))
     
     def distance(self, a):
-        '''a, b -tuples of 4 float'''
+        ''' a, b -tuples of 4 float '''
         a1, a2, a3, a4 = a.pos
         b1, b2, b3, b4 = self.camera.pos
         return int(np.sqrt(((a1 - b1) ** 2) + ((a2 - b2) ** 2) + ((a3 - b3) ** 2)))
     
     def create_object(self, points, faces, color):
-        ''' Создание объекта для отрисовки'''
+        ''' Создание объекта для отрисовки '''
         object1 = Object_3D(self, points, faces, color)
         self.objects.append(object1)
 
     def draw_objects_3D(self):
-        ''' Метод для отрисовки объектов в 3D (пока на чёрном фоне)
-            отрисовка зависит от положения объектов и от положения камеры
+        '''
+        Метод для отрисовки объектов в 3D (пока на чёрном фоне)
+        отрисовка зависит от положения объектов и от положения камеры
         '''
         self.screen.fill(BLACK)
         self.objects[0].draw()
@@ -368,7 +376,7 @@ class Render():
         BUT_SETTINGS.draw(self.screen)
     
     def draw_objects_2D(self):
-        ''' This method draw 2D projection of objects (on a surface y = 0)'''
+        ''' This method draw 2D projection of objects (on a surface y = 0) '''
         self.screen.fill(BLACK)
         self.screen.blit(self.game_background, self.game_background_rect)
         for object1 in self.objects:
@@ -382,7 +390,7 @@ class Render():
             obj.change_cam(self.camera)
 
     def create_objects3D(self, type, color):
-        '''wrapper for creating 3D objects'''
+        ''' wrapper for creating 3D objects '''
         if type == "chees":
             object = Object_3D.chees
         elif type == "board":
@@ -404,11 +412,13 @@ class Render():
 def rescale():
     '''This function will scale coords, if we need'''
     pass
+    '''
+    if __name__ == "__main__":
+    print('THIS MODULE NOT FOR DIRECT CALL')
+    '''
 
-'''if __name__ == "__main__":
-    print('THIS MODULE NOT FOR DIRECT CALL') '''
-
-'''   TUTORIAL
+'''
+    TUTORIAL
     draw1 = Render(screen) - example of initialization class Render
     draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE) -
         Object_3D.board[0] - numpy array of points
@@ -445,9 +455,8 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
             if i % 2 == 0:
                 draw1.create_objects3D("chees", GREEN) #куб (пока что)
             else:
-                draw1.create_objects3D("cube", RED) #куб (пока что)
+                draw1.create_objects3D("chees", RED) #куб (пока что)
             draw1.objects[-1].translate(pos) 
-
     finished = False
     great_finish = False
     FLAG = True
