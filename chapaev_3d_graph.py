@@ -47,7 +47,7 @@ class Button():
         self.text_width, self.text_height = self.font.size(text)
         self.textpos = (self.x + (self.width - self.text_width) / 2 , self.y + (self.height - self.text_height) / 2)
     def draw(self, screen):
-        pg.draw.rect(screen, self.color, (self.pos, (self.width, self.height)))#FIXIT нужен текст, + ещё кнопки
+        pg.draw.rect(screen, self.color, (self.pos, (self.width, self.height)))
         screen.blit(self.text, self.textpos)
 
 class Projection:
@@ -228,17 +228,15 @@ class Object_3D:
             if not np.any((polygon == self.H_WIDTH)|(polygon == self.H_HEIGHT)):  #check out of drawing range
                 pg.draw.polygon(self.screen, self.color, polygon, 3)
 
-    def change_pos(self, pos):
-        x0, y0, z0, w0 = self.pos
-        x1, y1, z1 = pos
-        self.pos = (x0 + x1, y0 + y1, z0 + z1, w0)
+    def change_pos(self):
+        self.pos = self.points[-1]
 
     def set_coords(self, pos):
         self.points = self.points @ translate(pos)        # Вращение и перемещение в глобальной системе координат
 
     def translate(self, pos):
         self.points = self.points @ translate(pos)
-        self.change_pos(pos)
+        self.change_pos()
 
     def scale(self, sc):
         self.points = self.points @ scale(sc)
@@ -335,7 +333,13 @@ class Render():
         self.game_background = pg.image.load('chessboard_texture.png')
         self.game_background = pg.transform.scale(self.game_background,(WIDTH, HEIGHT))
         self.game_background_rect = self.game_background.get_rect(bottomright=(WIDTH, HEIGHT))
-
+    
+    def distance(self, a):
+        '''a, b -tuples of 4 float'''
+        a1, a2, a3, a4 = a.pos
+        b1, b2, b3, b4 = self.camera.pos
+        return int(np.sqrt(((a1 - b1) ** 2) + ((a2 - b2) ** 2) + ((a3 - b3) ** 2)))
+    
     def create_object(self, points, faces, color):
         ''' Создание объекта для отрисовки'''
         object1 = Object_3D(self, points, faces, color)
@@ -346,22 +350,30 @@ class Render():
             отрисовка зависит от положения объектов и от положения камеры
         '''
         self.screen.fill(BLACK)
-        for object1 in self.objects:         #pygame.gfxdraw.textured_polygon(screen, face_list[i], obj.texture, 0, 0) maybe :]
+        self.objects[0].draw()
+        
+        obj = list(self.objects)  #FIXED bug : objects now shows in right order (who is closer, that shows last)
+        del obj[0]
+        obj.sort(key=self.distance, reverse = True)
+        #print([self.distance(object1) for object1 in obj])
+        for object1 in obj:         
             object1.draw()
-
-    def draw_menu(self):    #FIXIT (this must be beautiful)
+                                            #pygame.gfxdraw.textured_polygon(screen, face_list[i], obj.texture, 0, 0) maybe :]
+    def draw_menu(self):    #FIXED it's beautiful, I think
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
         self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
         BUT_START.draw(self.screen)
         BUT_NAME.draw(self.screen)
         BUT_SETTINGS.draw(self.screen)
+    
     def draw_objects_2D(self):
         ''' This method draw 2D projection of objects (on a surface y = 0)'''
         self.screen.fill(BLACK)
         self.screen.blit(self.game_background, self.game_background_rect)
         for object1 in self.objects:
             object1.draw_2D()
+    
     def change_cam(self):
         ''' this method change cams one by one in Render.CAMS '''
         self.cam_number = (self.cam_number + 1) % len(Render.CAMS)
@@ -419,7 +431,7 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     pg.font.init()
     clock = pg.time.Clock()
-    draw1 = Render(screen) # экземпляр класса отрисовки
+    draw1 = Render() # экземпляр класса отрисовки
     draw1.create_objects3D("board", WHITE)
 
     BUT_START = Button(RED, 'START', 20, (HALF_WIDTH, HALF_HEIGHT), 125, 50)
@@ -442,7 +454,7 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
     while not great_finish:
 
         while not finished and not great_finish:
-            draw1.draw_menu()                             #ТИПА МЕНЮ (FIXIT)
+            draw1.draw_menu()                   #MENU
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     great_finish = True
