@@ -12,10 +12,15 @@ import numpy as np
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+LIGHT_BLUE = (135, 206, 250)
+BACKGROUND_BLUE = (224, 255, 255)
+BOARD_YELLOW = (250, 208, 174)
+BOARD_BLACK = (81, 22, 4)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
 PLAYERCOLORS = (GREEN, RED)
+BOARD_COLORS = (BOARD_YELLOW, BOARD_BLACK)
 # pygame settings
 
 WIDTH = 600
@@ -90,7 +95,7 @@ class Camera:
         self.near_plane = 0.2
         self.far_plane = 1000
         self.moving_speed = 0.02*TILE #Скорость камеры
-        self.rot_speed = 0.03 #changing angle speed
+        self.rot_speed = 0.2 #changing angle speed
 
     def control(self):   #Part of dispetcherisation (MAYBE KILL IT?)
         key = pg.key.get_pressed()
@@ -124,6 +129,12 @@ class Camera:
 
     def camera_rot_x(self, angle):
         rotate = rotate_x(angle)
+        self.ox = self.ox @ rotate
+        self.oy = self.oy @ rotate
+        self.oz = self.oz @ rotate
+    
+    def camera_rot_z(self, angle):
+        rotate = rotate_z(angle)
         self.ox = self.ox @ rotate
         self.oy = self.oy @ rotate
         self.oz = self.oz @ rotate
@@ -193,8 +204,8 @@ class Object_3D:
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
-    chees = calculate_chees(20) #20 - Ideal, 50 - max, over 200 - lagging
-    def __init__(self, render, points, faces, color):
+    chees = calculate_chees(16) #20 - Ideal, 50 - max, over 200 - lagging
+    def __init__(self, render, points, faces, color, type):
         self.screen = render.screen
         self.camera = render.camera
         self.projection = render.projection
@@ -205,6 +216,7 @@ class Object_3D:
         self.faces = faces
         self.visibility = True
         self.pos = points[-1]
+        self.type = type
 
     def draw(self):
         if self.visibility:
@@ -229,7 +241,12 @@ class Object_3D:
         for face in self.faces:
             polygon = points_screen[face]
             if not np.any((polygon == self.H_WIDTH)|(polygon == self.H_HEIGHT)):  #check out of drawing range
-                pg.draw.polygon(self.screen, self.color, polygon, 3)
+                color = self.color
+                LINE_WIDTH = 3
+                if self.type == "board":
+                    color = BOARD_COLORS[max(face) % 2]
+                    LINE_WIDTH = 0
+                pg.draw.polygon(self.screen, color, polygon, LINE_WIDTH)
 
     def change_pos(self):
         self.pos = self.points[-1]
@@ -303,10 +320,11 @@ def scale(a):
         [0, 0, a, 0],
         [0, 0, 0, 1]])
 
-def calculate_cam(pos, angle_x, angle_y):
+def calculate_cam(pos, angle_x, angle_y, angle_z):
     CAM = Camera([0, 0, 0])
     CAM.camera_rot_y(angle_y)
     CAM.camera_rot_x(angle_x)
+    CAM.camera_rot_z(angle_z)
     CAM.pos = [*pos, 1.0]
     return CAM
 
@@ -321,11 +339,17 @@ class Render():
     2) draw_objects_3D - drawing obgects in 3D
     3) draw_menu - drawing main screen
     '''
-
-    CAMS = [calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0),           # !!! Render cams, you can change them, to observe the field
-            calculate_cam([-7*TILE, 2*TILE, 4*TILE], 0, np.pi / 2),        #     Also you can move them, but dispetcherisation not from
-            calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi),            #     main module is bad, so, I think it is not necessary to
-            calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2)]  #     have ability to move camera during the game
+    '''!!! Render cams, you can change them, to observe the field
+    Also you can move them, but dispetcherisation not from
+    main module is bad, so, I think it is not necessary to
+    have ability to move camera during the game
+    '''
+    CAMS = [calculate_cam([14*TILE, 3*TILE, 4*TILE+0.01], 0, -np.pi / 2, np.pi / 8),
+            calculate_cam([-6*TILE, 3*TILE, 4*TILE+0.01], 0, np.pi / 2, -np.pi / 8),
+            calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2, 0), 
+            calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0, 0),                
+            calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi, 0)]
+            
 
     def __init__(self):
         self.objects = []  # First will be board, then cheese
@@ -347,9 +371,9 @@ class Render():
         b1, b2, b3, b4 = self.camera.pos
         return int(np.sqrt(((a1 - b1) ** 2) + ((a2 - b2) ** 2) + ((a3 - b3) ** 2)))
     
-    def create_object(self, points, faces, color):
+    def create_object(self, points, faces, color, type):
         ''' Создание объекта для отрисовки '''
-        object1 = Object_3D(self, points, faces, color)
+        object1 = Object_3D(self, points, faces, color, type)
         self.objects.append(object1)
 
     def draw_objects_3D(self):
@@ -357,7 +381,7 @@ class Render():
         Метод для отрисовки объектов в 3D (пока на чёрном фоне)
         отрисовка зависит от положения объектов и от положения камеры
         '''
-        self.screen.fill(BLACK)
+        self.screen.fill(BACKGROUND_BLUE)
         self.objects[0].draw()
         
         obj = list(self.objects)  #FIXED bug : objects now shows in right order (who is closer, that shows last)
@@ -366,7 +390,7 @@ class Render():
         #print([self.distance(object1) for object1 in obj])
         for object1 in obj:         
             object1.draw()
-                                            #pygame.gfxdraw.textured_polygon(screen, face_list[i], obj.texture, 0, 0) maybe :]
+                                        #pygame.gfxdraw.textured_polygon(screen, face_list[i], obj.texture, 0, 0) maybe :]
     def draw_menu(self):    #FIXED it's beautiful, I think
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
@@ -397,7 +421,7 @@ class Render():
             object = Object_3D.board
         elif type == "cube":
             object = Object_3D.cube
-        self.create_object(object[0], object[1], color)
+        self.create_object(object[0], object[1], color, type)
 
     def generate_game_objects(self):
         # temporary, just while testing
@@ -408,14 +432,16 @@ class Render():
                 self.create_objects3D("chees", color)
                 self.objects[-1].translate(pos)
 
-
+    def end_render(self):
+        pg.quit()
+        
 def rescale():
     '''This function will scale coords, if we need'''
     pass
-    '''
-    if __name__ == "__main__":
+'''
+if __name__ == "__main__":
     print('THIS MODULE NOT FOR DIRECT CALL')
-    '''
+'''
 
 '''
     TUTORIAL
@@ -439,8 +465,7 @@ def rescale():
 if __name__ == "__main__": # This module will be not callable, this is temporary, just while testing
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    pg.font.init()
-    clock = pg.time.Clock()
+    clock = pg.time.Clock()   #!!! important
     draw1 = Render() # экземпляр класса отрисовки
     draw1.create_objects3D("board", WHITE)
 
@@ -500,4 +525,4 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
             clock.tick(FPS)
         finished = False
 
-    pg.quit()
+    draw1.end_render()
