@@ -1,7 +1,7 @@
-# Graphics for Chapaev 3D with poligons
-''' Camera control: wasd, to change angle use LEFT,RIGHT.
-    UP and DOWN didn't work well
-    !!!ATTENTION!!! левосторонняя система координат xyz - y = 0 - плоскость событий
+# Graphics for Chapaev 3D with poligons and 2D as projection on a ground surface 
+'''
+    Camera control: wasd, to change angle use LEFT,RIGHT,UP,DOWN.
+    ATTENTION this function is just for testing, because of many bugs
 '''
 
 import pygame as pg
@@ -34,12 +34,11 @@ HALF_HEIGHT = HEIGHT // 2
 
 TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
 RADIUS = TILE // 4             #Radius of the "шашка"
-CH_H = RADIUS 
-
-# BUTTONs
+CH_H = RADIUS                  #HEIGHT of "шашка"
 
 class Button():
     '''
+    mini class Button, to easily create then
     button with color (tuple 3 int), text (str), text_size - int, pos - center (tuple 2 int),
     width (int) and height (int)
     '''
@@ -83,12 +82,10 @@ class Projection:
             [0, 0, 1, 0],
             [HW, HH, 0, 1]               ])
 
-
-
 class Camera:
     def __init__(self, position):
         self.pos = np.array([*position, 1.0]) #coords of camera
-        self.ox = np.array([-1, 0, 0, 1]) #axes
+        self.ox = np.array([-1, 0, 0, 1])     #axes
         self.oy = np.array([0, 1, 0, 1])
         self.oz = np.array([0, 0, 1, 1])
         self.h_fov = np.pi / 3
@@ -96,9 +93,9 @@ class Camera:
         self.near_plane = 0.2
         self.far_plane = 1000
         self.moving_speed = 0.02*TILE #Скорость камеры
-        self.rot_speed = 0.2 #changing angle speed
+        self.rot_speed = 0.2          #changing angle speed
 
-    def control(self):   #Part of dispetcherisation (MAYBE KILL IT?)
+    def control(self):   #Part of dispetcherisation (IT IS JUST FOR TESTING)
         key = pg.key.get_pressed()
         if key[pg.K_a]:
             self.pos -= self.ox * self.moving_speed
@@ -140,7 +137,6 @@ class Camera:
         self.oy = self.oy @ rotate
         self.oz = self.oz @ rotate
 
-
     def translate_matrix(self):
         x, y, z, w = self.pos
         return np.array([
@@ -148,6 +144,7 @@ class Camera:
             [0, 1, 0, 0],
             [0, 0, 1, 0],
             [-x, -y, -z, 1]])
+    
     def rotate_matrix(self):
         oxx, oxy, oxz, w = self.ox
         oyx, oyy, oyz, w = self.oy
@@ -157,14 +154,15 @@ class Camera:
             [oxy, oyy, ozy, 0],
             [oxz, oyz, ozz, 0],
             [0, 0, 0, 1]])
+    
     def camera_matrix(self):
         return self.translate_matrix() @ self.rotate_matrix()
 
 def calculate_board():
-    A = np.empty(shape=(82,4), dtype = float)
+    A = np.empty(shape = (82, 4), dtype = float)
     for i in range(9):
         for j in range(9):
-            A[i*9+j] = (i*TILE, 0, j*TILE, 1)
+            A[i*9 + j] = (i*TILE, 0, j*TILE, 1)
     A[81] = (0, 0, 0, 1)
     B = np.empty(shape = (64, 4), dtype = int)
     for i in range(8):
@@ -206,13 +204,13 @@ class Object_3D:
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
     chees = calculate_chees(16) #20 - Ideal, 50 - max, over 200 - lagging
-    
     table = (np.array([(-4*TILE, 0, -4*TILE, 1), (-4*TILE, 4*TILE, -4*TILE, 1),
                     (4*TILE, 4*TILE, -4*TILE, 1),(4*TILE, 0, -4*TILE, 1),
                       (-4*TILE, 0, 4*TILE, 1), (-4*TILE, 4*TILE, 4*TILE, 1),
                       (4*TILE, 4*TILE, 4*TILE, 1), (4*TILE, 0, 4*TILE, 1), (0, 0, 0, 1)]),
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
-                              (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
+                              (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))#USELESS
+    
 
     def __init__(self, render, points, faces, color, type):
         self.screen = render.screen
@@ -238,7 +236,6 @@ class Object_3D:
                 polygon = points_screen[face]
                 pg.draw.polygon(self.screen, self.color, polygon, 3)
 
-
     def screen_projection(self):
         points = self.points @ self.camera.camera_matrix()
         points = points @ self.projection.projection_matrix
@@ -246,10 +243,9 @@ class Object_3D:
         points[(points > 2) | (points < -2)] = 0
         points = points @ self.projection.to_screen_matrix
         points_screen = points[:, :2]
-
         for face in self.faces:
             polygon = points_screen[face]
-            if not np.any((polygon == self.H_WIDTH)|(polygon == self.H_HEIGHT)):  #check out of drawing range
+            if not np.any((polygon == self.H_WIDTH)|(polygon == self.H_HEIGHT)):#checking out of drawing range
                 color = self.color
                 LINE_WIDTH = 3
                 if self.type == "board":
@@ -258,6 +254,7 @@ class Object_3D:
                 pg.draw.polygon(self.screen, color, polygon, LINE_WIDTH)
 
     def change_pos(self):
+        ''' change pos to actual pos'''
         self.pos = self.points[-1]
 
     def set_coords(self, pos):
@@ -291,6 +288,7 @@ class Object_3D:
         self.set_coords(anti_pos)
         self.rotate_y(angle)
         self.set_coords(pos)
+    
     def change_cam(self, camera):
         ''' function change camera '''
         self.camera = camera
@@ -359,8 +357,7 @@ class Render():
             calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2, 0), 
             calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0, 0),                
             calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi, 0)]
-            
-
+    
     def __init__(self):
         self.objects = []  # First will be board, then cheese
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -369,8 +366,6 @@ class Render():
         self.cam_number = 0
         self.camera = Render.CAMS[self.cam_number]
         self.projection = Projection(self)
-        #self.table = Object_3D(self, Object_3D.table[0], Object_3D.table[1], TABLE_COLOR, "table")
-        #self.table.translate((WIDTH // 2, -4*TILE, HEIGHT // 2))
         self.menu_background = pg.image.load('chapaev.jpg')
         self.menu_background_rect = self.menu_background.get_rect(bottomright=(WIDTH, HEIGHT))
         self.game_background = pg.image.load('chessboard_texture.png')
@@ -397,20 +392,18 @@ class Render():
         #self.table.draw()
         self.objects[0].draw()
         
-        obj = list(self.objects)  #FIXED bug : objects now shows in right order (who is closer, that shows last)
+        obj = list(self.objects)  
         del obj[0]
         obj.sort(key=self.distance, reverse = True)
-        #print([self.distance(object1) for object1 in obj])
         for object1 in obj:         
             object1.draw()
-                                        #pygame.gfxdraw.textured_polygon(screen, face_list[i], obj.texture, 0, 0) maybe :]
-    def draw_menu(self):    #FIXED it's beautiful, I think
+
+    
+    def draw_menu(self):    
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
         self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
         BUT_START.draw(self.screen)
-        BUT_NAME.draw(self.screen)
-        BUT_SETTINGS.draw(self.screen)
 
     def move_chees(self, pos):
         ''' pos - array of tuples (float, float, float)'''
@@ -418,8 +411,6 @@ class Render():
             if self.objects[i].type == "chees":
                 self.objects[i].set_coords(pos[i-1])
             
-        
-        
     def draw_objects_2D(self):
         ''' This method draw 2D projection of objects (on a surface y = 0) '''
         self.screen.fill(BLACK)
@@ -445,7 +436,7 @@ class Render():
         self.create_object(object[0], object[1], color, type)
 
     def generate_game_objects(self):
-        # temporary, just while testing
+        ''' This method generate 8 chess'''
         self.create_objects3D("board", WHITE)
         for i, color in enumerate(PLAYERCOLORS):
             for j in range(8):
@@ -457,10 +448,10 @@ class Render():
 def rescale():
     '''This function will scale coords, if we need'''
     pass
-'''
+
 if __name__ == "__main__":
     print('THIS MODULE NOT FOR DIRECT CALL')
-'''
+
 
 '''
     TUTORIAL
@@ -480,7 +471,7 @@ if __name__ == "__main__":
     draw1.camera.control() - motion camera (MAYBE PUT IT IN MAIN)
 '''
 
-
+'''
 if __name__ == "__main__": # This module will be not callable, this is temporary, just while testing
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -546,3 +537,4 @@ if __name__ == "__main__": # This module will be not callable, this is temporary
         finished = False
 
     draw1.end_render()
+'''
