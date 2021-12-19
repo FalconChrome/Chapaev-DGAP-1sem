@@ -11,7 +11,7 @@ class HitHandler:
     and the only gameplay option is to TURN a checker.
     """
     HitStage = Enum("HitStage", "NONE, HITTING")
-    SCALE = 100
+    SCALE = 60
 
     def __init__(self):
         """Set self state to waiting for mouse input"""
@@ -19,30 +19,35 @@ class HitHandler:
 
     def reset(self):
         self.state = self.HitStage.NONE
-        self.boost = Vector2(0, 0)
+        self.checker = None
 
-    def mouse_handler(self, fps):
+    def mouse_handler(self, checkers, fps):
         """
         The mouse handler logic itself
         """
         if self.state == self.HitStage.HITTING:
-            if mouse.get_pressed()[0]:
-                self.add_boost(Vector2(mouse.get_rel()), fps)
-            else:
+            checker = checkers.collide(mouse.get_pos())
+            if checker is not None and self.checker is None:
+                self.checker = checker
+            self.time += 1 / fps
+            if not mouse.get_pressed()[0]:
                 self.release()
                 return True
 
         elif self.state == self.HitStage.NONE:
             if mouse.get_pressed()[0]:
-                # if model collide checker
-                self.state = self.HitStage.HITTING
+                self.start_hit(Vector2(mouse.get_pos()))
 
-    def add_boost(self, shift, fps):
-        self.boost += shift * fps / self.SCALE
+    def start_hit(self, pos):
+        self.state = self.HitStage.HITTING
+        self.startpos = pos
+        self.time = 0.01
 
     def release(self):
-        # TURN model checker with boost
-        print(self.boost)
+        if self.checker is not None:
+            shift = Vector2(mouse.get_pos()) - self.startpos
+            # print(self.checker.get_pos(), "release")
+            self.checker.kick(shift / self.time / self.SCALE)
         self.reset()
         # return 0
 
@@ -62,7 +67,6 @@ class DisplayManager:
             else:
                 renderer.draw_objects_3D()
                 renderer.camera.control()
-            renderer.objects[1].rotate_local_y(0.2)
         else:
             renderer.draw_menu()
 
@@ -73,15 +77,33 @@ class DisplayManager:
         self.show_screen = self.Screens[screen_name.upper()]
 
 class CheckerManager:
-    def __init__(self):
-        self.checkergroup = pygame.sprite.Group()
-        self.checkers = self.gen_players()
-
     def gen_players(self, tile=75, radius=37.5):
-        player = [[], []]
-        for i, color in enumerate(PLAYERCOLORS):
-            for j in range(8):
-                pos = (i * 7 * tile + tile // 2, 0, j * tile + tile // 2)
-                player[i].append(Checker(*pos, 0, 0, self.checkergroup, radius=radius))
-                renderer.create_objects3D("chees", color)
-                self.objects[-1].translate(pos)
+        positions = [[(i * 7 * tile + tile // 2,
+                       j * tile + tile // 2)
+                      for j in range(8)]
+                     for i in range(2)]
+        self.players = [[Checker(*pos, 0, 0, radius)
+                         for pos in player_pos]
+                        for player_pos in positions]
+        self.all = [*self.players[0], *self.players[1]]
+        # self.all[0].Vy += 5
+
+    def get_positions(self):
+        return [checker.get_pos() for checker in self.all]
+
+    def update(self):
+        # print(self.all[0].distance2(self.all[1]))
+        for checker in self.all:
+            checker.update(self.all)
+
+    def collide(self, pos):
+        i = 0
+        for checker in self.all:
+            dist2 = checker.distance2_to_pos(mouse.get_pos())
+            if dist2 <= checker.radius ** 2:
+                print("found", i)
+                return checker
+            i+=1
+
+    def resting(self):
+        return all(map(Checker.resting, self.all))

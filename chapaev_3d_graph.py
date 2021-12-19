@@ -32,7 +32,9 @@ HALF_HEIGHT = HEIGHT // 2
 # Game settings
 TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
 RADIUS = TILE // 4             #Radius of the "шашка"
+
 CH_H = RADIUS                  #HEIGHT of "шашка"
+
 
 class Button():
     '''
@@ -128,7 +130,7 @@ class Camera:
         self.ox = self.ox @ rotate
         self.oy = self.oy @ rotate
         self.oz = self.oz @ rotate
-    
+
     def camera_rot_z(self, angle):
         rotate = rotate_z(angle)
         self.ox = self.ox @ rotate
@@ -182,7 +184,7 @@ def calculate_chees(N):
         A[i] = (x, H, z, 1)
     A[2*N] = (0, 0, 0, 1)
     for i in range(N):
-        B[i] = (i, (i+1) % N, N + (i+1) % N, N+i)    
+        B[i] = (i, (i+1) % N, N + (i+1) % N, N+i)
     return A, B
 
 class Object_3D:
@@ -202,6 +204,7 @@ class Object_3D:
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
     chees = calculate_chees(16) #20 - Ideal, 50 - max, over 200 - lagging
+
     table = (np.array([(-4*TILE, 0, -4*TILE, 1), (-4*TILE, 4*TILE, -4*TILE, 1),
                     (4*TILE, 4*TILE, -4*TILE, 1),(4*TILE, 0, -4*TILE, 1),
                       (-4*TILE, 0, 4*TILE, 1), (-4*TILE, 4*TILE, 4*TILE, 1),
@@ -352,10 +355,10 @@ class Render():
     '''
     CAMS = [calculate_cam([14*TILE, 3*TILE, 4*TILE+0.01], 0, -np.pi / 2, np.pi / 8),
             calculate_cam([-6*TILE, 3*TILE, 4*TILE+0.01], 0, np.pi / 2, -np.pi / 8),
-            calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2, 0), 
-            calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0, 0),                
+            calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2, 0),
+            calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0, 0),
             calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi, 0)]
-    
+
     def __init__(self):
         self.objects = []  # First will be board, then cheese
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -369,13 +372,13 @@ class Render():
         self.game_background = pg.image.load('chessboard_texture.png')
         self.game_background = pg.transform.scale(self.game_background,(WIDTH, HEIGHT))
         self.game_background_rect = self.game_background.get_rect(bottomright=(WIDTH, HEIGHT))
-    
+
     def distance(self, a):
         ''' a, b -tuples of 4 float '''
         a1, a2, a3, a4 = a.pos
         b1, b2, b3, b4 = self.camera.pos
         return int(np.sqrt(((a1 - b1) ** 2) + ((a2 - b2) ** 2) + ((a3 - b3) ** 2)))
-    
+
     def create_object(self, points, faces, color, type):
         ''' Создание объекта для отрисовки '''
         object1 = Object_3D(self, points, faces, color, type)
@@ -388,11 +391,11 @@ class Render():
         '''
         self.screen.fill(BACKGROUND_BLUE)
         self.objects[0].draw()
-        
+
         obj = list(self.objects)  
         del obj[0]
         obj.sort(key=self.distance, reverse = True)
-        for object1 in obj:         
+        for object1 in obj:
             object1.draw()
 
     
@@ -407,14 +410,14 @@ class Render():
         for i in range(1, len(self.objects)):
             if self.objects[i].type == "chees":
                 self.objects[i].set_coords(pos[i-1])
-            
+
     def draw_objects_2D(self):
         ''' This method draw 2D projection of objects (on a surface y = 0) '''
         self.screen.fill(BLACK)
         self.screen.blit(self.game_background, self.game_background_rect)
         for object1 in self.objects:
             object1.draw_2D()
-    
+
     def change_cam(self):
         ''' this method change cams one by one in Render.CAMS '''
         self.cam_number = (self.cam_number + 1) % len(Render.CAMS)
@@ -438,10 +441,11 @@ class Render():
         for i, color in enumerate(PLAYERCOLORS):
             for j in range(8):
                 self.create_objects3D("chees", color)
+        self.move_chees(positions)
 
     def end_render(self):
         pg.quit()
-        
+
 def rescale():
     '''This function will scale coords, if we need'''
     pass
