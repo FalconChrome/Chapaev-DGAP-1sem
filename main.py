@@ -1,13 +1,13 @@
 import pygame
 from pygame import mouse, Vector2
 from pygame import Color
-from chapaev_3d_graph import Render, Button  # Object_3D
+from chapaev_3d_graph import Render, Button, RADIUS, TILE  # Object_3D
 from enum import Enum
-from config import *
+# from config import *
 from checkers import Checker
 from managers import HitHandler, DisplayManager, CheckerManager
 
-from transitions import Machine
+# from transitions import Machine
 
 # Checker = enum.Enum("Side", "black white")
 # model = np.array([list(Checker)] * 8)
@@ -32,20 +32,24 @@ class GameDispatcher:
 
         self.state = self.GameStage.VIEW
         self.hit_control = HitHandler()
+        self.FPS = 30
+        self.clock = pygame.time.Clock()
         # self.players = {"color": ("green", "red")}
         # self.player_colors = tuple(map(Color, self.players["color"]))
 
     def restart(self, restart_option):
         # model init
         # FIX: model gen all, not renderer_manager
-        renderer.generate_game_objects()
+        checkers.gen_players(TILE, RADIUS)
+        renderer.generate_game_objects(checkers.get_positions())
         # display.toggle_screen('game')
-        print('init', restart_option)
 
     def common_process(self):
         display.render(renderer)
 
         # renderer.draw_menu()
+        checkers.update()
+        renderer.move_chees(checkers.get_positions())
         pygame.display.set_caption(self.state.name)
         pygame.display.update()
         self.clock.tick(self.FPS)
@@ -67,8 +71,6 @@ class GameDispatcher:
             return 0
 
     def gameloop(self):
-        self.FPS = 30
-        self.clock = pygame.time.Clock()
         while self.state != self.GameStage.RESTART:
             if self.state == self.GameStage.VIEW:
                 self.viewloop()
@@ -84,7 +86,7 @@ class GameDispatcher:
                 if event.type == pygame.QUIT:
                     self.state = self.GameStage.RESTART
                     return None
-            hitted = self.hit_control.mouse_handler(self.FPS)
+            hitted = self.hit_control.mouse_handler(checkers, self.FPS)
             if hitted:
                 self.state = self.GameStage.MOTION
                 # model start motion
@@ -97,10 +99,13 @@ class GameDispatcher:
                 if event.type == pygame.QUIT:
                     self.state = self.GameStage.RESTART
                     return None
-                else:  # if event.type == pygame.KEYDOWN:
-                    self.state = self.GameStage.VIEW
-            # when model stop flying
-
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_v:
+                        display.toggle_view()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    display.toggle_view()
+            if checkers.resting():
+                self.state = self.GameStage.VIEW
             self.common_process()
 
     def viewloop(self):
@@ -115,13 +120,10 @@ class GameDispatcher:
                     elif event.key == pygame.K_2:
                         display.change_cam()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.click(event)
+                    self.state = self.GameStage.TURN
+                    display.fixed_view = True
             self.common_process()
 
-    def click(self, event):
-        if self.state == self.GameStage.VIEW:
-            self.state = self.GameStage.TURN
-        # print(event.pos)
 
 def mainloop():
     """
@@ -138,5 +140,6 @@ if __name__ == "__main__":
     renderer = Render()
     display = DisplayManager(renderer)
     game = GameDispatcher()
+    checkers = CheckerManager()
     mainloop()
     pygame.quit()
