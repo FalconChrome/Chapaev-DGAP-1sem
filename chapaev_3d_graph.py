@@ -401,7 +401,7 @@ class Render():
         self.screen.fill(BLACK)
         self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
         BUT_START.draw(self.screen)
-
+    
     def move_chees(self, pos):
         ''' pos - array of tuples (float, float, float)'''
         for i in range(1, len(self.objects)):
