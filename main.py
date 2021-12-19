@@ -37,13 +37,13 @@ class GameDispatcher:
 
     def restart(self, restart_option):
         # model init
-        # FIX: model gen all, not render_manager
+        # FIX: model gen all, not renderer_manager
         renderer.generate_game_objects()
         # display.toggle_screen('game')
         print('init', restart_option)
 
     def common_process(self):
-        display.render()
+        display.render(renderer)
 
         # renderer.draw_menu()
         pygame.display.set_caption(self.state.name)
@@ -136,7 +136,7 @@ def mainloop():
 if __name__ == "__main__":
     pygame.init()
     renderer = Render()
-    display = DisplayManager()
+    display = DisplayManager(renderer)
     game = GameDispatcher()
     mainloop()
     pygame.quit()

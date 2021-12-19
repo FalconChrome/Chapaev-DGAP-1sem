@@ -50,12 +50,12 @@ class HitHandler:
 class DisplayManager:
     Screens = Enum("Screens", "MENU GAME")
 
-    def __init__(self):
+    def __init__(self, renderer):
         self.show_screen = self.Screens.GAME
         self.fixed_view = True
         self.change_cam = renderer.change_cam
 
-    def render(self):
+    def render(self, renderer):
         if self.show_screen == self.Screens.GAME:
             if self.fixed_view:
                 renderer.draw_objects_2D()
@@ -73,10 +73,15 @@ class DisplayManager:
         self.show_screen = self.Screens[screen_name.upper()]
 
 class CheckerManager:
-    def gen_players(self, tile, radius):
-        player = []
+    def __init__(self):
+        self.checkergroup = pygame.sprite.Group()
+        self.checkers = self.gen_players()
+
+    def gen_players(self, tile=75, radius=37.5):
+        player = [[], []]
         for i, color in enumerate(PLAYERCOLORS):
             for j in range(8):
                 pos = (i * 7 * tile + tile // 2, 0, j * tile + tile // 2)
-                self.create_objects3D("chees", color)
-                self.objects[-1].translate(pos)3
+                player[i].append(Checker(*pos, 0, 0, self.checkergroup, radius=radius))
+                renderer.create_objects3D("chees", color)
+                self.objects[-1].translate(pos)
