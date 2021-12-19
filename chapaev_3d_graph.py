@@ -1,4 +1,4 @@
-# Graphics for Chapaev 3D with poligons and 2D as projection on a ground surface 
+# Graphics for Chapaev 3D with poligons and 2D as projection on a ground surface
 '''
     Camera control: wasd, to change angle use LEFT,RIGHT,UP,DOWN.
     ATTENTION this function is just for testing, because of many bugs
@@ -144,7 +144,7 @@ class Camera:
             [0, 1, 0, 0],
             [0, 0, 1, 0],
             [-x, -y, -z, 1]])
-    
+
     def rotate_matrix(self):
         oxx, oxy, oxz, w = self.ox
         oyx, oyy, oyz, w = self.oy
@@ -154,7 +154,7 @@ class Camera:
             [oxy, oyy, ozy, 0],
             [oxz, oyz, ozz, 0],
             [0, 0, 0, 1]])
-    
+
     def camera_matrix(self):
         return self.translate_matrix() @ self.rotate_matrix()
 
@@ -211,7 +211,7 @@ class Object_3D:
                       (4*TILE, 4*TILE, 4*TILE, 1), (4*TILE, 0, 4*TILE, 1), (0, 0, 0, 1)]),
                     np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))#USELESS
-    
+
 
     def __init__(self, render, points, faces, color, type):
         self.screen = render.screen
@@ -289,7 +289,7 @@ class Object_3D:
         self.set_coords(anti_pos)
         self.rotate_y(angle)
         self.set_coords(pos)
-    
+
     def change_cam(self, camera):
         ''' function change camera '''
         self.camera = camera
@@ -392,19 +392,19 @@ class Render():
         self.screen.fill(BACKGROUND_BLUE)
         self.objects[0].draw()
 
-        obj = list(self.objects)  
+        obj = list(self.objects)
         del obj[0]
         obj.sort(key=self.distance, reverse = True)
         for object1 in obj:
             object1.draw()
 
-    
-    def draw_menu(self):    
+
+    def draw_menu(self):
         ''' The first screen, greeting, settings, game mode'''
         self.screen.fill(BLACK)
         self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
         BUT_START.draw(self.screen)
-    
+
     def move_chees(self, pos):
         ''' pos - array of tuples (float, float, float)'''
         for i in range(1, len(self.objects)):
@@ -435,7 +435,7 @@ class Render():
             object = Object_3D.cube
         self.create_object(object[0], object[1], color, type)
 
-    def generate_game_objects(self):
+    def generate_game_objects(self, positions):
         ''' This method generate 16 chess and a board'''
         self.create_objects3D("board", WHITE)
         for i, color in enumerate(PLAYERCOLORS):
@@ -475,7 +475,5 @@ if __name__ == "__main__":
     draw1.change_cam() - change camera
     draw1.camera.control() - motion camera
     draw1.draw_menu() - draw menu
-    
+
 '''
-
-

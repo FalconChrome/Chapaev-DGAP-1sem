@@ -1,7 +1,7 @@
 import pygame
 from pygame import mouse, Vector2
 from enum import Enum
-from config import *
+# from config import *
 from checkers import Checker
 
 
