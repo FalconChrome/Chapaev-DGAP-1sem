@@ -19,6 +19,7 @@ BOARD_BLACK = (81, 22, 4)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
+TABLE_COLOR = LIGHT_BLUE
 PLAYERCOLORS = (GREEN, RED)
 BOARD_COLORS = (BOARD_YELLOW, BOARD_BLACK)
 # pygame settings
@@ -190,7 +191,7 @@ def calculate_chees(N):
 
 class Object_3D:
     '''
-    render - Render obgect
+    render - Render object
     points - numpy array of points, last point - center of local sistem
     faces - numpy array of numbers of points, that together make faces
     color - tuple of 3 integer (0 - 255)
@@ -205,6 +206,14 @@ class Object_3D:
                               (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
     board = calculate_board()
     chees = calculate_chees(16) #20 - Ideal, 50 - max, over 200 - lagging
+    
+    table = (np.array([(-4*TILE, 0, -4*TILE, 1), (-4*TILE, 4*TILE, -4*TILE, 1),
+                    (4*TILE, 4*TILE, -4*TILE, 1),(4*TILE, 0, -4*TILE, 1),
+                      (-4*TILE, 0, 4*TILE, 1), (-4*TILE, 4*TILE, 4*TILE, 1),
+                      (4*TILE, 4*TILE, 4*TILE, 1), (4*TILE, 0, 4*TILE, 1), (0, 0, 0, 1)]),
+                    np.array([(0, 1, 2, 3), (0, 4, 7, 3), (0, 4, 5, 1),
+                              (1, 2, 6, 5), (2, 3, 7, 6), (4, 5, 6, 7)]))
+
     def __init__(self, render, points, faces, color, type):
         self.screen = render.screen
         self.camera = render.camera
@@ -359,6 +368,8 @@ class Render():
         self.cam_number = 0
         self.camera = Render.CAMS[self.cam_number]
         self.projection = Projection(self)
+        #self.table = Object_3D(self, Object_3D.table[0], Object_3D.table[1], TABLE_COLOR, "table")
+        #self.table.translate((WIDTH // 2, -4*TILE, HEIGHT // 2))
         self.menu_background = pg.image.load('chapaev.jpg')
         self.menu_background_rect = self.menu_background.get_rect(bottomright=(WIDTH, HEIGHT))
         self.game_background = pg.image.load('chessboard_texture.png')
@@ -382,6 +393,7 @@ class Render():
         отрисовка зависит от положения объектов и от положения камеры
         '''
         self.screen.fill(BACKGROUND_BLUE)
+        #self.table.draw()
         self.objects[0].draw()
         
         obj = list(self.objects)  #FIXED bug : objects now shows in right order (who is closer, that shows last)
@@ -398,7 +410,15 @@ class Render():
         BUT_START.draw(self.screen)
         BUT_NAME.draw(self.screen)
         BUT_SETTINGS.draw(self.screen)
-    
+
+    def move_chees(self, pos):
+        ''' pos - array of tuples (float, float, float)'''
+        for i in range(1, len(self.objects)):
+            if self.objects[i].type == "chees":
+                self.objects[i].set_coords(pos[i-1])
+            
+        
+        
     def draw_objects_2D(self):
         ''' This method draw 2D projection of objects (on a surface y = 0) '''
         self.screen.fill(BLACK)
