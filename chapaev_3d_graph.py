@@ -8,7 +8,6 @@ import pygame as pg
 import numpy as np
 
 # COLORS
-
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
@@ -22,8 +21,8 @@ WHITE = (255, 255, 255)
 TABLE_COLOR = LIGHT_BLUE
 PLAYERCOLORS = (GREEN, RED)
 BOARD_COLORS = (BOARD_YELLOW, BOARD_BLACK)
-# pygame settings
 
+# pygame settings
 WIDTH = 600
 HEIGHT = 600
 FPS = 30
@@ -31,7 +30,6 @@ HALF_WIDTH = WIDTH // 2
 HALF_HEIGHT = HEIGHT // 2
 
 # Game settings
-
 TILE = min(WIDTH, HEIGHT) // 8 #Length of one tile in chessboard
 RADIUS = TILE // 4             #Radius of the "шашка"
 CH_H = RADIUS                  #HEIGHT of "шашка"
@@ -389,7 +387,6 @@ class Render():
         отрисовка зависит от положения объектов и от положения камеры
         '''
         self.screen.fill(BACKGROUND_BLUE)
-        #self.table.draw()
         self.objects[0].draw()
         
         obj = list(self.objects)  
@@ -436,7 +433,7 @@ class Render():
         self.create_object(object[0], object[1], color, type)
 
     def generate_game_objects(self):
-        ''' This method generate 8 chess'''
+        ''' This method generate 16 chess and a board'''
         self.create_objects3D("board", WHITE)
         for i, color in enumerate(PLAYERCOLORS):
             for j in range(8):
@@ -455,86 +452,26 @@ if __name__ == "__main__":
 
 '''
     TUTORIAL
-    draw1 = Render(screen) - example of initialization class Render
-    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE) -
+    draw1 = Render() - example of initialization class Render
+    draw1.create_object(Object_3D.board[0], Object_3D.board[1], WHITE, "chees") -
         Object_3D.board[0] - numpy array of points
         Object_3D.board[1] - numpy array of faces
         WHITE - color
+        "chees" - type
         Object_3D.cube - same with board - tuple of 2 numpy arrays
     draw1.objects[-1].set_coords(pos) - in future - set new coords in global sistem
         [-1] - last object in array
     draw1.draw_menu() - draw menu. Nothing else.
     draw1.objects[1].rotate_local_y(0.2) - rotate object around it's local oy (vertical)
         0.2 - angle
+    generate_game_objects() - create game objects
+    draw1.move_chees(POS) - moving all chess on their bos
     draw1.draw_objects_2D() - draw objects in 3D
     draw1.draw_objects_3D() - draw objects in 2D
-    draw1.camera.control() - motion camera (MAYBE PUT IT IN MAIN)
+    draw1.change_cam() - change camera
+    draw1.camera.control() - motion camera
+    draw1.draw_menu() - draw menu
+    
 '''
 
-'''
-if __name__ == "__main__": # This module will be not callable, this is temporary, just while testing
-    pg.init()
-    screen = pg.display.set_mode((WIDTH, HEIGHT))
-    clock = pg.time.Clock()   #!!! important
-    draw1 = Render() # экземпляр класса отрисовки
-    draw1.create_objects3D("board", WHITE)
 
-    BUT_START = Button(RED, 'START', 20, (HALF_WIDTH, HALF_HEIGHT), 125, 50)
-    BUT_NAME = Button(RED, 'WRITE YOUR NAME', 10, (HALF_WIDTH, HALF_HEIGHT -100), 125, 50)
-    BUT_SETTINGS = Button(RED, 'SETTINGS', 20, (HALF_WIDTH, HALF_HEIGHT +100), 125, 50)
-
-    POS = []
-    for i in range(2):
-        for j in range(8):
-            pos = (i*7*TILE + TILE // 2, 0, j*TILE + TILE // 2)
-            POS.append(pos)
-            if i % 2 == 0:
-                draw1.create_objects3D("chees", GREEN) #куб (пока что)
-            else:
-                draw1.create_objects3D("chees", RED) #куб (пока что)
-    draw1.move_chees(POS)
-    finished = False
-    great_finish = False
-    FLAG = True
-    while not great_finish:
-
-        while not finished and not great_finish:
-            draw1.draw_menu()                   #MENU
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    great_finish = True
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_1:
-                        finished = True
-            pg.display.set_caption(str(clock.get_fps()))
-            pg.display.update()
-            clock.tick(FPS)
-
-        finished = False
-        motion = False
-        while not finished and not great_finish:
-            if motion:
-                draw1.objects[1].rotate_local_y(0.2) #поворот объекта 1 на 0.2 радиана каждый кадр
-                draw1.objects[1].translate((1, 0, 0))
-            if FLAG == True:
-                draw1.draw_objects_2D()              #отрисовка объектов
-            else:
-                draw1.draw_objects_3D()
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    finished = True
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_1:
-                        FLAG = not FLAG
-                    if event.key == pg.K_2:
-                        draw1.change_cam()
-                    if event.key == pg.K_SPACE:
-                        motion = not motion
-                draw1.camera.control()
-            pg.display.set_caption(str(clock.get_fps()))
-            pg.display.update()
-            clock.tick(FPS)
-        finished = False
-
-    draw1.end_render()
-'''
