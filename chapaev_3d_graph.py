@@ -17,6 +17,7 @@ BOARD_YELLOW = (250, 208, 174)
 BOARD_BLACK = (81, 22, 4)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+TEXT_COLOR = (100, 200, 100)
 
 TABLE_COLOR = LIGHT_BLUE
 PLAYERCOLORS = (GREEN, RED)
@@ -372,7 +373,6 @@ class Render():
         self.game_background = pg.image.load('chessboard_texture.png')
         self.game_background = pg.transform.scale(self.game_background,(WIDTH, HEIGHT))
         self.game_background_rect = self.game_background.get_rect(bottomright=(WIDTH, HEIGHT))
-
     def distance(self, a):
         ''' a, b -tuples of 4 float '''
         a1, a2, a3, a4 = a.pos
@@ -404,7 +404,17 @@ class Render():
         self.screen.fill(BLACK)
         self.screen.blit(self.menu_background, self.menu_background_rect) #Отрисовка Чапаева
         BUT_START.draw(self.screen)
-
+    
+    def draw_text(self, name):
+        color = BLACK
+        self.screen.fill(color)
+        font = pg.font.SysFont('Comic Sans MS', 30)
+        text = font.render(name, True, TEXT_COLOR)
+        text_width, text_height = font.size(name)
+        textpos = ((WIDTH - text_width) / 2, (HEIGHT - text_height) / 2)
+        pg.draw.rect(self.screen, color, ((0, 0), (WIDTH, HEIGHT)))
+        self.screen.blit(text, textpos)
+    
     def move_chees(self, pos):
         ''' pos - array of tuples (float, float, float)'''
         for i in range(1, len(self.objects)):
@@ -452,6 +462,7 @@ def rescale():
 
 if __name__ == "__main__":
     print('THIS MODULE NOT FOR DIRECT CALL')
+    
 
 
 '''
