@@ -37,8 +37,6 @@ class Checker:
 
     def hit(self,other):
         print("hit checker")
-        self.x+=-self.Vx
-        self.y+=-self.Vy
         gamma=math.atan2(other.y-self.y,other.x-self.x)
         betta=math.atan2(self.Vy,self.Vx)
         alfa=abs(gamma-betta)
@@ -47,7 +45,7 @@ class Checker:
         V1=V0*math.cos(alfa)
         other.Vx=V1*math.cos(gamma)
         other.Vy=V1*math.sin(gamma)
-        if self.Vy<0:
+        if self.Vy<=0:
             if abs(gamma)<abs(betta):
                 self.Vx=V*math.cos(-3.14159/2+gamma)#FIX
                 self.Vy=V*math.sin(-3.14159/2+gamma)
