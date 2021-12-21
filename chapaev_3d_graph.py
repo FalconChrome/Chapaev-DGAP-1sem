@@ -103,21 +103,23 @@ class Camera:
         if key[pg.K_d]:
             self.pos += self.ox * self.moving_speed
         if key[pg.K_s]:
-            self.pos -= self.oy * self.moving_speed
+            if self.pos[1] > 2*TILE:
+                self.pos -= self.oy * self.moving_speed
         if key[pg.K_w]:
             self.pos += self.oy * self.moving_speed
         if key[pg.K_q]:
             self.pos -= self.oz * self.moving_speed
         if key[pg.K_e]:
-            self.pos += self.oz * self.moving_speed
+            if self.pos[1] > 2*TILE:
+                self.pos += self.oz * self.moving_speed
         if key[pg.K_LEFT]:
-            self.camera_rot_y(-self.rot_speed)
-        if key[pg.K_RIGHT]:
             self.camera_rot_y(self.rot_speed)
-        if key[pg.K_UP]:
-            self.camera_rot_x(-self.rot_speed)
-        if key[pg.K_DOWN]:
-            self.camera_rot_x(self.rot_speed)
+        if key[pg.K_RIGHT]:
+            self.camera_rot_y(-self.rot_speed)
+        #if key[pg.K_UP]:
+        #    self.camera_rot_x(-self.rot_speed)
+        #if key[pg.K_DOWN]:
+        #   self.camera_rot_x(self.rot_speed)
 
 
     def camera_rot_y(self, angle):
@@ -242,7 +244,7 @@ class Object_3D:
         points = self.points @ self.camera.camera_matrix()
         points = points @ self.projection.projection_matrix
         points /= points[:, -1].reshape(-1, 1)
-        points[(points > 2) | (points < -2)] = 0
+        points[(points > 4) | (points < -4)] = 0
         points = points @ self.projection.to_screen_matrix
         points_screen = points[:, :2]
         for face in self.faces:
@@ -355,10 +357,7 @@ class Render():
     have ability to move camera during the game
     '''
     CAMS = [calculate_cam([14*TILE, 3*TILE, 4*TILE+0.01], 0, -np.pi / 2, np.pi / 8),
-            calculate_cam([-6*TILE, 3*TILE, 4*TILE+0.01], 0, np.pi / 2, -np.pi / 8),
-            calculate_cam([15*TILE, 2*TILE, 4*TILE+0.01], 0, -np.pi / 2, 0),
-            calculate_cam([4*TILE+0.01, 2*TILE, -7*TILE], 0, 0, 0),
-            calculate_cam([4*TILE, 2*TILE, 15*TILE], 0, np.pi, 0)]
+            calculate_cam([-6*TILE, 3*TILE, 4*TILE+0.01], 0, np.pi / 2, -np.pi / 8)]
 
     def __init__(self):
         self.objects = []  # First will be board, then cheese
@@ -373,6 +372,7 @@ class Render():
         self.game_background = pg.image.load('chessboard_texture.png')
         self.game_background = pg.transform.scale(self.game_background,(WIDTH, HEIGHT))
         self.game_background_rect = self.game_background.get_rect(bottomright=(WIDTH, HEIGHT))
+    
     def distance(self, a):
         ''' a, b -tuples of 4 float '''
         a1, a2, a3, a4 = a.pos
