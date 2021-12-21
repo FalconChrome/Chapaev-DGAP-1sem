@@ -1,5 +1,5 @@
 import pygame
-from pygame import mouse, Vector2
+from pygame import mouse, Vector2, mixer
 from pygame import Color
 from chapaev_3d_graph import Render, Button, RADIUS, TILE  # Object_3D
 from enum import Enum
@@ -17,6 +17,7 @@ class GameDispatcher:
     """
     The controller of game play and event
     """
+    MUSIC = "петр-чаиковскии-вальс-цветов-щелкунчик.mp3"
     GameStage = Enum("GameStage", "VIEW TURN MOTION RESTART")
 
     def __init__(self):
@@ -29,7 +30,7 @@ class GameDispatcher:
         #     'MOTION': self.flyloop,
         #     'RESTART': self.restart
         # })
-
+        mixer.music.load(self.MUSIC)
         self.state = self.GameStage.VIEW
         self.hit_control = HitHandler()
         self.FPS = 30
@@ -40,6 +41,7 @@ class GameDispatcher:
     def restart(self, restart_option):
         # model init
         # FIX: model gen all, not renderer_manager
+        mixer.music.play(loops=-1)
         checkers.gen_players(TILE, RADIUS)
         renderer.generate_game_objects(checkers.get_positions())
         # display.toggle_screen('game')
@@ -137,6 +139,7 @@ def mainloop():
 
 if __name__ == "__main__":
     pygame.init()
+    mixer.init()
     renderer = Render()
     display = DisplayManager(renderer)
     game = GameDispatcher()
