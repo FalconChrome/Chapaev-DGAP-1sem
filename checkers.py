@@ -36,6 +36,8 @@ class Checker:
                 self.hit(other)
 
     def hit(self,other):
+        self.x-=self.Vx/10    #Отскок
+        self.y-=self.Vy/10
         print("hit checker")
         gamma=math.atan2(other.y-self.y,other.x-self.x)
         betta=math.atan2(self.Vy,self.Vx)
